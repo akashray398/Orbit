@@ -31,6 +31,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:common"))
     implementation(project(":feature:home"))
+    implementation(project(":feature:onboarding"))
     implementation(project(":feature:chat"))
     implementation(project(":feature:settings"))
 

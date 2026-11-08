@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Orbit</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_skip_for_now">Skip for now</string>
+
+    <!-- Onboarding Page 1 -->
+    <string name="onboarding_page1_title">Meet Orbit</string>
+    <string name="onboarding_page1_body">Your phone, on autopilot. Perform complex tasks hands-free using natural AI tool-calling.</string>
+
+    <!-- Onboarding Page 2 -->
+    <string name="onboarding_page2_title">Just say it</string>
+    <string name="onboarding_page2_body">Voice and text commands made effortless. Orbit understands context, intent, and phone actions.</string>
+
+    <!-- Onboarding Page 3 -->
+    <string name="onboarding_page3_title">You stay in control</string>
+    <string name="onboarding_page3_body">Clear confirmations, live action logs, and instant undo options for every phone operation.</string>
+
+    <!-- Onboarding Page 4 -->
+    <string name="onboarding_page4_title">Private by design</string>
+    <string name="onboarding_page4_body">On-device handling with minimal data sharing. Banking apps and password managers are strictly protected and never touched.</string>
+
+    <!-- Permissions Screen -->
+    <string name="permissions_title">Permissions &amp; Privacy</string>
+    <string name="permissions_subtitle">Grant capabilities to unlock AI tool-calling. Orbit asks only when you choose to grant them.</string>
+
+    <!-- Notification Permission -->
+    <string name="perm_notifications_title">Notifications</string>
+    <string name="perm_notifications_reason">Allows Orbit to send task completions, background alerts, and summaries.</string>
+    <string name="perm_notifications_not_do">Orbit will never send promotional spam or intrusive background ads.</string>
+
+    <!-- Microphone Permission -->
+    <string name="perm_microphone_title">Microphone</string>
+    <string name="perm_microphone_reason">Enables hands-free voice commands and real-time speech recognition.</string>
+    <string name="perm_microphone_not_do">Orbit never records audio in the background without active voice mode.</string>
+
+    <!-- Calendar Permission -->
+    <string name="perm_calendar_title">Calendar</string>
+    <string name="perm_calendar_reason">Allows Orbit to schedule events, check availability, and manage reminders.</string>
+    <string name="perm_calendar_not_do">Orbit will never delete or edit existing events without your explicit confirmation.</string>
+
+    <!-- Notification Access Permission -->
+    <string name="perm_notification_access_title">Notification Access</string>
+    <string name="perm_notification_access_reason">Enables notification summaries and automated message digests.</string>
+    <string name="perm_notification_access_not_do">Orbit does not store private notification contents externally or share message data.</string>
+
+    <!-- Status Chips & Actions -->
+    <string name="perm_status_not_asked">Not asked</string>
+    <string name="perm_status_granted">Granted</string>
+    <string name="perm_status_denied">Denied</string>
+    <string name="perm_status_blocked">Blocked</string>
+    <string name="perm_action_grant">Allow</string>
+    <string name="perm_action_try_again">Try again</string>
+    <string name="perm_action_open_settings">Open settings</string>
+    <string name="permissions_later_note">Exact alarms and Do Not Disturb access will be requested later when a tool specifically requires them.</string>
+</resources>
