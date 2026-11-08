@@ -8,6 +8,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:domain"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")

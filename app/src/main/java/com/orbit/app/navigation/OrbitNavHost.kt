@@ -11,11 +11,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.orbit.app.feature.chat.navigation.ChatRoute
 import com.orbit.app.feature.chat.navigation.chatScreen
-import com.orbit.app.feature.home.navigation.HomeRoute
 import com.orbit.app.feature.home.navigation.homeScreen
 import com.orbit.app.feature.onboarding.navigation.OnboardingRoute
 import com.orbit.app.feature.onboarding.navigation.onboardingScreen
+import com.orbit.app.feature.settings.navigation.SettingsRoute
 import com.orbit.app.feature.settings.navigation.settingsScreen
 import com.orbit.app.splash.OrbitIntroScreen
 import com.orbit.app.splash.SplashViewModel
@@ -39,7 +40,7 @@ fun OrbitNavHost(
     val startDestination = when {
         ProcessColdStartTracker.isColdStart -> IntroRoute
         !isOnboardingCompleted -> OnboardingRoute
-        else -> HomeRoute
+        else -> ChatRoute
     }
 
     NavHost(
@@ -54,7 +55,7 @@ fun OrbitNavHost(
             OrbitIntroScreen(
                 onIntroComplete = {
                     ProcessColdStartTracker.isColdStart = false
-                    val nextRoute = if (!isOnboardingCompleted) OnboardingRoute else HomeRoute
+                    val nextRoute = if (!isOnboardingCompleted) OnboardingRoute else ChatRoute
                     navController.navigate(nextRoute) {
                         popUpTo<IntroRoute> { inclusive = true }
                     }
@@ -64,14 +65,19 @@ fun OrbitNavHost(
 
         onboardingScreen(
             onOnboardingComplete = {
-                navController.navigate(HomeRoute) {
+                navController.navigate(ChatRoute) {
                     popUpTo<OnboardingRoute> { inclusive = true }
                 }
             }
         )
 
+        chatScreen(
+            onSettingsClick = {
+                navController.navigate(SettingsRoute)
+            }
+        )
+
         homeScreen()
-        chatScreen()
         settingsScreen()
     }
 }

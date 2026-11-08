@@ -12,6 +12,7 @@ graph TD
         feature_home[feature:home]
         feature_chat[feature:chat]
         feature_settings[feature:settings]
+        feature_onboarding[feature:onboarding]
     end
 
     subgraph Core
@@ -24,6 +25,7 @@ graph TD
     app[app] --> feature_home
     app --> feature_chat
     app --> feature_settings
+    app --> feature_onboarding
     app --> core_designsystem
     app --> core_domain
     app --> core_data
@@ -40,6 +42,10 @@ graph TD
     feature_settings --> core_domain
     feature_settings --> core_designsystem
     feature_settings --> core_common
+
+    feature_onboarding --> core_domain
+    feature_onboarding --> core_designsystem
+    feature_onboarding --> core_common
 
     core_data --> core_domain
     core_data --> core_common
@@ -58,6 +64,15 @@ graph TD
 
 ---
 
+## Voice & Audio Privacy Notes
+
+- **Zero Audio Storage**: Orbit never records, persists, or uploads raw audio files to external servers. Speech recognition is handled directly via Android's native `SpeechRecognizer` API.
+- **On-Device Preference**: On Android 13+ (API 33+), Orbit prefers `SpeechRecognizer.createOnDeviceSpeechRecognizer` for offline speech processing when supported by the device.
+- **Privacy Indicator**: Android 12+ (API 31+) displays a system green microphone indicator in the status bar whenever microphone audio is actively being sampled.
+- **Languages Supported**: English (`en-IN`), Hindi (`hi-IN`), and Punjabi (`pa-IN`).
+
+---
+
 ## Brand & Logo Guidelines
 
 The Orbit brand mark consists of a glowing tilted orbit ring surrounding a gradient core sphere with a revolving satellite dot.
@@ -73,18 +88,6 @@ The Orbit brand mark consists of a glowing tilted orbit ring surrounding a gradi
 - **Themed Icon (Android 13+)**: `app/src/main/res/drawable/ic_launcher_monochrome.xml` flat single-color silhouette.
 - **Notification Icon**: `app/src/main/res/drawable/ic_stat_orbit.xml` 24dp flat white glyph with transparency.
 - **In-App Composable**: `OrbitLogo(size, mode, animated)` in `core:designsystem` supporting `Mark`, `Wordmark`, and `Mono` modes with satellite animation.
-
-### Rules & Usage
-- **Clear Space**: Minimum padding equal to `size * 0.25` around the mark.
-- **Minimum Size**: `24dp` in-app; never scale below 24dp to maintain ring & satellite legibility.
-- **Prohibited**: Do not stretch, alter gradient angles, add unapproved drop shadows, or recolor outside brand palette tokens (`#7C5CFF`, `#22D3EE`, `#070B1A`).
-
-### Google Play Store Asset Export Instructions
-To produce the 512x512px Play Store app icon:
-1. Open Android Studio -> Right-click `app/src/main` -> **New > Image Asset**.
-2. Select **Asset Type: Vector Asset** and choose `ic_orbit_logo.xml`.
-3. Set Target Size to `512 x 512 px` and Export as PNG to output `play_store_512.png`.
-4. Feature Graphic (`1024 x 500 px`): Render `ic_orbit_logo.xml` centered at 256x256px over an aurora background fill (`#070B1A` to `#1E1B4B`).
 
 ---
 
@@ -126,10 +129,10 @@ To produce the 512x512px Play Store app icon:
 - [x] **Step 1: Project setup and architecture**
 - [x] **Step 2: Core Design System & Theme Engine**
 - [x] **Step 3: Logo, adaptive launcher icon, and themed icon**
-- [ ] **Step 4: AI Agent Tool-Calling Engine Framework**
-- [ ] **Step 5: Voice & Speech Recognition Integration**
-- [ ] **Step 6: Chat & Interaction UI (feature:chat)**
-- [ ] **Step 7: Reminders & Alarm Tool Implementation**
+- [x] **Step 4: Live-motion animated splash**
+- [x] **Step 5: Onboarding and permissions flow**
+- [x] **Step 6: Chat and agent home screen**
+- [x] **Step 7: Voice input with live waveform and spoken replies**
 - [ ] **Step 8: Notes & Memory Management Tooling**
 - [ ] **Step 9: Notification Summary & Digest Feature**
 - [ ] **Step 10: App Launcher & Device Automation Utilities**

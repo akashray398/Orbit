@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import com.orbit.app.feature.chat.ui.ChatScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -13,8 +14,8 @@ fun NavController.navigateToChat(navOptions: NavOptions? = null) {
     navigate(ChatRoute, navOptions)
 }
 
-fun NavGraphBuilder.chatScreen() {
+fun NavGraphBuilder.chatScreen(onSettingsClick: () -> Unit = {}) {
     composable<ChatRoute> {
-        // Placeholder for Chat screen (Prompt 6)
+        ChatScreen(onSettingsClick = onSettingsClick)
     }
 }
