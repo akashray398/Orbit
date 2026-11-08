@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_foreground">
+    <target
+        android:name="orbit_ring_path"
+        android:animation="@animator/animator_orbit_ring" />
+    <target
+        android:name="orbit_core_sphere"
+        android:animation="@animator/animator_orbit_core" />
+    <target
+        android:name="orbit_satellite"
+        android:animation="@animator/animator_orbit_satellite" />
+</animated-vector>

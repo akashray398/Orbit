@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:name="orbit_core"
+        android:pathData="M 54,54 m -16,0 a 16,16 0 1,0 32,0 a 16,16 0 1,0 -32,0"
+        android:fillColor="#000000"/>
+    <path
+        android:name="orbit_ring"
+        android:pathData="M 28,60 C 22,46 40,34 62,38 C 84,42 90,56 76,68 C 62,80 34,74 28,60 Z"
+        android:strokeColor="#000000"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"/>
+    <path
+        android:name="orbit_satellite"
+        android:pathData="M 72,40 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0"
+        android:fillColor="#000000"/>
+</vector>
