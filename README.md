@@ -64,6 +64,15 @@ graph TD
 
 ---
 
+## Data Layer & Persistence Security
+
+- **Room Persistence**: Stores conversations, messages, notes (with FTS4 full-text search), tasks, reminders, and action logs in `orbit_database.db`.
+- **Cloud Backup Exclusion**: Configured `data_extraction_rules.xml` and `backup_rules.xml` to explicitly exclude `orbit_database.db` and journal files from unencrypted cloud backups to protect sensitive user conversation history and personal notes.
+- **DataStore Repositories**: DataStore Preferences manage `OnboardingRepository`, `VoiceSettingsRepository`, `AppSettingsRepository`, and `AgentSettingsRepository`.
+- **Interrupted Recovery**: Automatic startup recovery converts streaming messages interrupted by process death to `Interrupted` status.
+
+---
+
 ## Voice & Audio Privacy Notes
 
 - **Zero Audio Storage**: Orbit never records, persists, or uploads raw audio files to external servers. Speech recognition is handled directly via Android's native `SpeechRecognizer` API.
@@ -83,12 +92,6 @@ The Orbit brand mark consists of a glowing tilted orbit ring surrounding a gradi
 - **Orbit Ring**: Center `(54, 54)`, Radius X `28dp`, Radius Y `12dp`, Tilt `-25°`, Gradient stroke with fade end
 - **Satellite Dot**: Orbiting point at radius `(28dp, 12dp)`
 
-### Brand Assets
-- **Adaptive Launcher Icon**: `app/src/main/res/drawable/ic_launcher_foreground.xml` inside central 66dp safe zone with `ic_launcher_background.xml` deep navy gradient.
-- **Themed Icon (Android 13+)**: `app/src/main/res/drawable/ic_launcher_monochrome.xml` flat single-color silhouette.
-- **Notification Icon**: `app/src/main/res/drawable/ic_stat_orbit.xml` 24dp flat white glyph with transparency.
-- **In-App Composable**: `OrbitLogo(size, mode, animated)` in `core:designsystem` supporting `Mark`, `Wordmark`, and `Mono` modes with satellite animation.
-
 ---
 
 ## Tech Stack
@@ -97,9 +100,9 @@ The Orbit brand mark consists of a glowing tilted orbit ring surrounding a gradi
 - **UI Framework:** Jetpack Compose with Material 3
 - **Dependency Injection:** Hilt
 - **Annotation Processing:** KSP
+- **Data & Persistence:** Room, Paging 3, DataStore Preferences
 - **Asynchronous & State:** Coroutines, StateFlow, Channel
 - **Navigation:** Type-Safe Navigation Compose (`kotlinx.serialization`)
-- **Data & Persistence:** Room, DataStore Preferences
 - **Networking:** Retrofit 2, OkHttp 4
 - **Background Work:** WorkManager
 - **Logging:** Timber
@@ -133,11 +136,11 @@ The Orbit brand mark consists of a glowing tilted orbit ring surrounding a gradi
 - [x] **Step 5: Onboarding and permissions flow**
 - [x] **Step 6: Chat and agent home screen**
 - [x] **Step 7: Voice input with live waveform and spoken replies**
-- [ ] **Step 8: Notes & Memory Management Tooling**
-- [ ] **Step 9: Notification Summary & Digest Feature**
-- [ ] **Step 10: App Launcher & Device Automation Utilities**
-- [ ] **Step 11: Backend Proxy & Secure Key Management**
-- [ ] **Step 12: Offline Capability & Local LLM Fallback**
+- [x] **Step 8: Data layer (Room, DataStore, repositories)**
+- [ ] **Step 9: AI Tool-Calling Engine Framework**
+- [ ] **Step 10: Reminders & Alarm Tool Implementation**
+- [ ] **Step 11: Notes & Memory Management Tooling**
+- [ ] **Step 12: Notification Summary & Digest Feature**
 - [ ] **Step 13: Feature Settings & Agent Preferences (feature:settings)**
 - [ ] **Step 14: End-to-End Integration, Accessibility & 60fps Optimization**
 - [ ] **Step 15: Production Hardening, Release Build & Final Verification**

@@ -1,15 +1,29 @@
 package com.orbit.app.core.data.di
 
 import com.orbit.app.core.data.gateway.FakeAgentGateway
-import com.orbit.app.core.data.repository.InMemoryChatRepositoryImpl
+import com.orbit.app.core.data.repository.ActionLogRepositoryImpl
+import com.orbit.app.core.data.repository.AgentSettingsRepositoryImpl
+import com.orbit.app.core.data.repository.AppSettingsRepositoryImpl
+import com.orbit.app.core.data.repository.DataMaintenanceRepositoryImpl
+import com.orbit.app.core.data.repository.NoteRepositoryImpl
 import com.orbit.app.core.data.repository.OnboardingRepositoryImpl
+import com.orbit.app.core.data.repository.ReminderRepositoryImpl
+import com.orbit.app.core.data.repository.RoomChatRepositoryImpl
+import com.orbit.app.core.data.repository.TaskRepositoryImpl
 import com.orbit.app.core.data.repository.VoiceSettingsRepositoryImpl
 import com.orbit.app.core.data.voice.AndroidSpeechOutputController
 import com.orbit.app.core.data.voice.AndroidVoiceInputController
+import com.orbit.app.core.domain.repository.ActionLogRepository
 import com.orbit.app.core.domain.repository.AgentGateway
+import com.orbit.app.core.domain.repository.AgentSettingsRepository
+import com.orbit.app.core.domain.repository.AppSettingsRepository
 import com.orbit.app.core.domain.repository.ChatRepository
+import com.orbit.app.core.domain.repository.DataMaintenanceRepository
+import com.orbit.app.core.domain.repository.NoteRepository
 import com.orbit.app.core.domain.repository.OnboardingRepository
+import com.orbit.app.core.domain.repository.ReminderRepository
 import com.orbit.app.core.domain.repository.SpeechOutputController
+import com.orbit.app.core.domain.repository.TaskRepository
 import com.orbit.app.core.domain.repository.VoiceInputController
 import com.orbit.app.core.domain.repository.VoiceSettingsRepository
 import dagger.Binds
@@ -37,8 +51,50 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindChatRepository(
-        impl: InMemoryChatRepositoryImpl
+        impl: RoomChatRepositoryImpl
     ): ChatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNoteRepository(
+        impl: NoteRepositoryImpl
+    ): NoteRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTaskRepository(
+        impl: TaskRepositoryImpl
+    ): TaskRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReminderRepository(
+        impl: ReminderRepositoryImpl
+    ): ReminderRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindActionLogRepository(
+        impl: ActionLogRepositoryImpl
+    ): ActionLogRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppSettingsRepository(
+        impl: AppSettingsRepositoryImpl
+    ): AppSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAgentSettingsRepository(
+        impl: AgentSettingsRepositoryImpl
+    ): AgentSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDataMaintenanceRepository(
+        impl: DataMaintenanceRepositoryImpl
+    ): DataMaintenanceRepository
 
     @Binds
     @Singleton

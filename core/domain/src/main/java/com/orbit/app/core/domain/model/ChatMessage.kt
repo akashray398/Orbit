@@ -10,7 +10,8 @@ enum class ChatMessageStatus {
     Sending,
     Streaming,
     Complete,
-    Failed
+    Failed,
+    Interrupted
 }
 
 data class ChatMessage(

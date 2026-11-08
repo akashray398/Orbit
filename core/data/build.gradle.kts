@@ -9,12 +9,18 @@ android {
     namespace = "com.orbit.app.core.data"
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:common"))
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation("androidx.room:room-paging:2.6.1")
+    implementation("androidx.paging:paging-runtime:3.3.6")
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)

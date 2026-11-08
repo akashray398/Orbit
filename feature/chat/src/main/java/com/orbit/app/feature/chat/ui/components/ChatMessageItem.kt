@@ -185,13 +185,13 @@ fun ChatMessageItem(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
 
-                                if (message.status == ChatMessageStatus.Failed) {
+                                if (message.status == ChatMessageStatus.Failed || message.status == ChatMessageStatus.Interrupted) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
-                                            text = "Failed to process message",
+                                            text = if (message.status == ChatMessageStatus.Interrupted) "Interrupted response" else "Failed to process message",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = OrbitTheme.colors.danger
+                                            color = OrbitTheme.colors.warning
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         IconButton(
@@ -201,7 +201,7 @@ fun ChatMessageItem(
                                             Icon(
                                                 imageVector = Icons.Default.Refresh,
                                                 contentDescription = "Retry message",
-                                                tint = OrbitTheme.colors.danger
+                                                tint = OrbitTheme.colors.warning
                                             )
                                         }
                                     }

@@ -1,11 +1,11 @@
 package com.orbit.app.core.common
 
-import com.orbit.app.core.common.result.Result
-import com.orbit.app.core.common.result.map
-import com.orbit.app.core.common.result.onError
-import com.orbit.app.core.common.result.onSuccess
 import com.orbit.app.core.common.result.safeCall
 import com.orbit.app.core.domain.model.AppError
+import com.orbit.app.core.domain.result.Result
+import com.orbit.app.core.domain.result.map
+import com.orbit.app.core.domain.result.onError
+import com.orbit.app.core.domain.result.onSuccess
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
