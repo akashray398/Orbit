@@ -3,11 +3,13 @@ package com.orbit.app.core.data.di
 import android.content.Context
 import androidx.room.Room
 import com.orbit.app.core.common.coroutine.DispatcherProvider
+import com.orbit.app.core.data.database.MIGRATION_1_2
 import com.orbit.app.core.data.database.OrbitDatabase
 import com.orbit.app.core.data.database.daos.ActionLogDao
 import com.orbit.app.core.data.database.daos.ConversationDao
 import com.orbit.app.core.data.database.daos.MessageDao
 import com.orbit.app.core.data.database.daos.NoteDao
+import com.orbit.app.core.data.database.daos.NotificationDao
 import com.orbit.app.core.data.database.daos.ReminderDao
 import com.orbit.app.core.data.database.daos.TaskDao
 import dagger.Module
@@ -33,6 +35,7 @@ object DatabaseModule {
             OrbitDatabase::class.java,
             "orbit_database.db"
         )
+            .addMigrations(MIGRATION_1_2)
             .setQueryExecutor(dispatchers.io.asExecutor())
             .setTransactionExecutor(dispatchers.io.asExecutor())
             .fallbackToDestructiveMigrationOnDowngrade()
@@ -56,4 +59,7 @@ object DatabaseModule {
 
     @Provides
     fun provideActionLogDao(db: OrbitDatabase): ActionLogDao = db.actionLogDao()
+
+    @Provides
+    fun provideNotificationDao(db: OrbitDatabase): NotificationDao = db.notificationDao()
 }

@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import com.orbit.app.feature.settings.ui.SettingsScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -13,8 +14,8 @@ fun NavController.navigateToSettings(navOptions: NavOptions? = null) {
     navigate(SettingsRoute, navOptions)
 }
 
-fun NavGraphBuilder.settingsScreen() {
+fun NavGraphBuilder.settingsScreen(onBackClick: () -> Unit = {}) {
     composable<SettingsRoute> {
-        // Placeholder for Settings screen
+        SettingsScreen(onBackClick = onBackClick)
     }
 }

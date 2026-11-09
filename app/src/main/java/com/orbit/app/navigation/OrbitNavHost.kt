@@ -78,6 +78,10 @@ fun OrbitNavHost(
         )
 
         homeScreen()
-        settingsScreen()
+        settingsScreen(
+            onBackClick = {
+                navController.popBackStack()
+            }
+        )
     }
 }

@@ -7,17 +7,16 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Batch 1 Tools Permissions -->
-    <!-- SET_ALARM: Normal permission granted at install for clock alarms and timers -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
-    <!-- SCHEDULE_EXACT_ALARM: Required on API 31+ for exact reminder notifications -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <!-- RECEIVE_BOOT_COMPLETED: Reschedules scheduled reminders after device reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- POST_NOTIFICATIONS: Required on API 33+ to display reminder notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- READ_CALENDAR & WRITE_CALENDAR: Direct insertion and conflict checking in user calendar -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
+    <!-- Batch 2 Tools Permissions -->
+    <!-- ACCESS_NOTIFICATION_POLICY: Required to toggle Do Not Disturb mode -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
     <queries>
         <intent>
@@ -70,6 +69,16 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name="com.orbit.app.core.tools.service.OrbitNotificationListener"
+            android:label="Orbit Notification Summarizer"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
     </application>
 
