@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Manifest queries required on Android 11+ (API 30+) for SpeechRecognizer & TextToSpeech visibility -->
     <queries>
@@ -20,6 +22,7 @@
         android:label="Orbit"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Orbit.Splash">
         <activity
             android:name=".MainActivity"

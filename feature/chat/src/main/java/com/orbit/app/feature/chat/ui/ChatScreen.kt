@@ -69,6 +69,7 @@ import com.orbit.app.core.domain.model.AgentState
 import com.orbit.app.core.domain.model.VoiceInputState
 import com.orbit.app.feature.chat.ui.components.ChatInputBar
 import com.orbit.app.feature.chat.ui.components.ChatMessageItem
+import com.orbit.app.feature.chat.ui.components.LlmTestDialog
 import com.orbit.app.feature.chat.ui.components.VoiceInputPanel
 import com.orbit.app.feature.chat.ui.components.VoiceLanguageSheet
 import kotlinx.coroutines.launch
@@ -153,6 +154,17 @@ fun ChatScreen(
         )
     }
 
+    if (uiState.llmTestState.showDialog) {
+        LlmTestDialog(
+            testTitle = uiState.llmTestState.title,
+            streamedText = uiState.llmTestState.streamedText,
+            toolCallDetails = uiState.llmTestState.toolCallDetails,
+            usageText = uiState.llmTestState.usageText,
+            isTesting = uiState.llmTestState.isTesting,
+            onDismissRequest = viewModel::dismissLlmTestDialog
+        )
+    }
+
     OrbitBackground(modifier = modifier) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -218,6 +230,20 @@ fun ChatScreen(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false }
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text("Debug: Test LLM Stream") },
+                                    onClick = {
+                                        showMenu = false
+                                        viewModel.runLlmTest(withTool = false)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Debug: Test LLM Tool Call") },
+                                    onClick = {
+                                        showMenu = false
+                                        viewModel.runLlmTest(withTool = true)
+                                    }
+                                )
                                 DropdownMenuItem(
                                     text = { Text("Voice & Speech Settings") },
                                     onClick = {

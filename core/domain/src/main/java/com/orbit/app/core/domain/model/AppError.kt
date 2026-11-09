@@ -20,6 +20,25 @@ sealed class AppError : Throwable() {
         override val cause: Throwable? = null
     ) : AppError()
 
+    data class RateLimited(
+        val retryAfterSeconds: Int? = null,
+        override val message: String? = "Rate limit exceeded"
+    ) : AppError()
+
+    data object BudgetExceeded : AppError()
+
+    data class Timeout(
+        override val message: String? = "Request timed out"
+    ) : AppError()
+
+    data class ServerUnavailable(
+        override val message: String? = "Server unavailable"
+    ) : AppError()
+
+    data class InvalidResponse(
+        override val message: String? = "Invalid response format"
+    ) : AppError()
+
     data class Unknown(
         override val message: String? = null,
         override val cause: Throwable? = null

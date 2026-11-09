@@ -8,12 +8,18 @@ import com.orbit.app.core.domain.model.AgentState
 import com.orbit.app.core.domain.model.ChatMessage
 import com.orbit.app.core.domain.model.ChatMessageRole
 import com.orbit.app.core.domain.model.ChatMessageStatus
+import com.orbit.app.core.domain.model.ContentPart
+import com.orbit.app.core.domain.model.LlmEvent
+import com.orbit.app.core.domain.model.LlmMessage
+import com.orbit.app.core.domain.model.LlmRequest
 import com.orbit.app.core.domain.model.SuggestionChipModel
+import com.orbit.app.core.domain.model.ToolSpec
 import com.orbit.app.core.domain.model.VoiceInputEvent
 import com.orbit.app.core.domain.model.VoiceInputState
 import com.orbit.app.core.domain.model.VoiceLocale
 import com.orbit.app.core.domain.repository.AgentGateway
 import com.orbit.app.core.domain.repository.ChatRepository
+import com.orbit.app.core.domain.repository.LlmClient
 import com.orbit.app.core.domain.repository.SpeechOutputController
 import com.orbit.app.core.domain.repository.VoiceInputController
 import com.orbit.app.core.domain.repository.VoiceSettingsRepository
@@ -22,11 +28,19 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
+
+data class LlmTestDialogState(
+    val showDialog: Boolean = false,
+    val title: String = "",
+    val streamedText: String = "",
+    val toolCallDetails: String? = null,
+    val usageText: String? = null,
+    val isTesting: Boolean = false
+)
 
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
@@ -44,13 +58,15 @@ data class ChatUiState(
     val voiceLocale: VoiceLocale = VoiceLocale.ENGLISH,
     val spokenRepliesEnabled: Boolean = false,
     val autoSendVoice: Boolean = true,
-    val keepScreenOn: Boolean = true
+    val keepScreenOn: Boolean = true,
+    val llmTestState: LlmTestDialogState = LlmTestDialogState()
 )
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val agentGateway: AgentGateway,
+    val llmClient: LlmClient,
     val voiceInputController: VoiceInputController,
     val speechOutputController: SpeechOutputController,
     private val voiceSettingsRepository: VoiceSettingsRepository,
@@ -141,6 +157,87 @@ class ChatViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun runLlmTest(withTool: Boolean) {
+        val title = if (withTool) "LLM Tool-Call Test" else "LLM Stream Test"
+        _uiState.update {
+            it.copy(
+                llmTestState = LlmTestDialogState(
+                    showDialog = true,
+                    title = title,
+                    isTesting = true
+                )
+            )
+        }
+
+        viewModelScope.launch(dispatchers.io) {
+            val promptText = if (withTool) "What time is it right now?" else "Introduce yourself as Orbit AI agent."
+            val tools = if (withTool) {
+                listOf(
+                    ToolSpec(
+                        name = "get_current_time",
+                        description = "Returns current system date and time",
+                        parametersJsonSchema = "{\"type\":\"object\",\"properties\":{}}"
+                    )
+                )
+            } else emptyList()
+
+            val request = LlmRequest(
+                messages = listOf(
+                    LlmMessage(
+                        role = "user",
+                        content = listOf(ContentPart.Text(promptText))
+                    )
+                ),
+                tools = tools
+            )
+
+            var textAcc = ""
+
+            llmClient.stream(request).collect { event ->
+                when (event) {
+                    is LlmEvent.TextDelta -> {
+                        textAcc += event.text
+                        _uiState.update { state ->
+                            state.copy(llmTestState = state.llmTestState.copy(streamedText = textAcc))
+                        }
+                    }
+                    is LlmEvent.ToolCallRequested -> {
+                        val details = "ID: ${event.id}\nName: ${event.name}\nArguments: ${event.argumentsJson}"
+                        _uiState.update { state ->
+                            state.copy(llmTestState = state.llmTestState.copy(toolCallDetails = details))
+                        }
+                    }
+                    is LlmEvent.Usage -> {
+                        val usage = "Tokens: ${event.inputTokens} in / ${event.outputTokens} out"
+                        _uiState.update { state ->
+                            state.copy(llmTestState = state.llmTestState.copy(usageText = usage))
+                        }
+                    }
+                    is LlmEvent.Done -> {
+                        _uiState.update { state ->
+                            state.copy(llmTestState = state.llmTestState.copy(isTesting = false))
+                        }
+                    }
+                    is LlmEvent.Failed -> {
+                        val err = event.error.message ?: "Failed"
+                        _uiState.update { state ->
+                            state.copy(
+                                llmTestState = state.llmTestState.copy(
+                                    streamedText = "Error: $err",
+                                    isTesting = false
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun dismissLlmTestDialog() {
+        _uiState.update { it.copy(llmTestState = LlmTestDialogState()) }
     }
 
     fun startVoiceInput() {
@@ -253,7 +350,6 @@ class ChatViewModel @Inject constructor(
                         }
                         _uiState.update { it.copy(agentState = AgentState.Idle, isStreaming = false) }
 
-                        // Speak completed response if spoken replies enabled
                         if (_uiState.value.spokenRepliesEnabled && accumulatedText.isNotBlank()) {
                             speechOutputController.speak(accumulatedText, _uiState.value.voiceLocale)
                         }

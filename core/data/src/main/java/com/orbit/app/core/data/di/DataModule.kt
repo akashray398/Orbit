@@ -1,6 +1,7 @@
 package com.orbit.app.core.data.di
 
 import com.orbit.app.core.data.gateway.FakeAgentGateway
+import com.orbit.app.core.data.network.LlmClientImpl
 import com.orbit.app.core.data.repository.ActionLogRepositoryImpl
 import com.orbit.app.core.data.repository.AgentSettingsRepositoryImpl
 import com.orbit.app.core.data.repository.AppSettingsRepositoryImpl
@@ -19,6 +20,7 @@ import com.orbit.app.core.domain.repository.AgentSettingsRepository
 import com.orbit.app.core.domain.repository.AppSettingsRepository
 import com.orbit.app.core.domain.repository.ChatRepository
 import com.orbit.app.core.domain.repository.DataMaintenanceRepository
+import com.orbit.app.core.domain.repository.LlmClient
 import com.orbit.app.core.domain.repository.NoteRepository
 import com.orbit.app.core.domain.repository.OnboardingRepository
 import com.orbit.app.core.domain.repository.ReminderRepository
@@ -53,6 +55,12 @@ abstract class DataModule {
     abstract fun bindChatRepository(
         impl: RoomChatRepositoryImpl
     ): ChatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLlmClient(
+        impl: LlmClientImpl
+    ): LlmClient
 
     @Binds
     @Singleton
