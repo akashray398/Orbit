@@ -11,6 +11,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.orbit.app.feature.activity.navigation.activityScreen
 import com.orbit.app.feature.chat.navigation.ChatRoute
 import com.orbit.app.feature.chat.navigation.chatScreen
 import com.orbit.app.feature.home.navigation.homeScreen
@@ -79,6 +80,11 @@ fun OrbitNavHost(
 
         homeScreen()
         settingsScreen(
+            onBackClick = {
+                navController.popBackStack()
+            }
+        )
+        activityScreen(
             onBackClick = {
                 navController.popBackStack()
             }

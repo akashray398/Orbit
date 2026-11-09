@@ -70,6 +70,7 @@ import com.orbit.app.core.domain.model.VoiceInputState
 import com.orbit.app.feature.chat.ui.components.AgentTraceDialog
 import com.orbit.app.feature.chat.ui.components.ChatInputBar
 import com.orbit.app.feature.chat.ui.components.ChatMessageItem
+import com.orbit.app.feature.chat.ui.components.ConfirmationBottomSheet
 import com.orbit.app.feature.chat.ui.components.LlmTestDialog
 import com.orbit.app.feature.chat.ui.components.VoiceInputPanel
 import com.orbit.app.feature.chat.ui.components.VoiceLanguageSheet
@@ -139,6 +140,16 @@ fun ChatScreen(
         if (uiState.messages.isNotEmpty() && isAtBottom) {
             listState.animateScrollToItem(uiState.messages.size - 1)
         }
+    }
+
+    val pendingConf = uiState.pendingConfirmation
+    if (pendingConf != null) {
+        ConfirmationBottomSheet(
+            action = pendingConf.action,
+            onApprove = viewModel::approveConfirmation,
+            onDeny = viewModel::denyConfirmation,
+            onDismissRequest = viewModel::denyConfirmation
+        )
     }
 
     if (showLanguageSheet) {

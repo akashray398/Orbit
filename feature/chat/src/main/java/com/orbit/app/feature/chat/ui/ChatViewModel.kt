@@ -23,6 +23,9 @@ import com.orbit.app.core.domain.repository.LlmClient
 import com.orbit.app.core.domain.repository.SpeechOutputController
 import com.orbit.app.core.domain.repository.VoiceInputController
 import com.orbit.app.core.domain.repository.VoiceSettingsRepository
+import com.orbit.app.core.domain.usecase.PendingConfirmation
+import com.orbit.app.core.domain.usecase.PendingConfirmationSource
+import com.orbit.app.core.domain.usecase.UiConfirmationGate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,7 +64,8 @@ data class ChatUiState(
     val keepScreenOn: Boolean = true,
     val llmTestState: LlmTestDialogState = LlmTestDialogState(),
     val showTraceDialog: Boolean = false,
-    val traceLogs: List<String> = emptyList()
+    val traceLogs: List<String> = emptyList(),
+    val pendingConfirmation: PendingConfirmation? = null
 )
 
 @HiltViewModel
@@ -72,6 +76,8 @@ class ChatViewModel @Inject constructor(
     val voiceInputController: VoiceInputController,
     val speechOutputController: SpeechOutputController,
     private val voiceSettingsRepository: VoiceSettingsRepository,
+    val confirmationSource: PendingConfirmationSource,
+    val confirmationGate: UiConfirmationGate,
     private val dispatchers: DispatcherProvider
 ) : ViewModel() {
 
@@ -89,6 +95,23 @@ class ChatViewModel @Inject constructor(
         observeVoiceSettings()
         observeVoiceEvents()
         observeVoiceInputState()
+        observeConfirmations()
+    }
+
+    private fun observeConfirmations() {
+        viewModelScope.launch(dispatchers.main) {
+            confirmationSource.pendingConfirmation.collect { pending ->
+                _uiState.update { it.copy(pendingConfirmation = pending) }
+            }
+        }
+    }
+
+    fun approveConfirmation() {
+        confirmationGate.approveCurrent()
+    }
+
+    fun denyConfirmation() {
+        confirmationGate.denyCurrent()
     }
 
     private fun observeMessages() {

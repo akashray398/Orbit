@@ -32,7 +32,8 @@ import com.orbit.app.core.domain.repository.VoiceInputController
 import com.orbit.app.core.domain.repository.VoiceSettingsRepository
 import com.orbit.app.core.domain.tools.EchoDebugTool
 import com.orbit.app.core.domain.tools.GetCurrentTimeTool
-import com.orbit.app.core.domain.usecase.TemporaryConfirmationGate
+import com.orbit.app.core.domain.usecase.PendingConfirmationSource
+import com.orbit.app.core.domain.usecase.UiConfirmationGate
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -59,8 +60,14 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindConfirmationGate(
-        impl: TemporaryConfirmationGate
+        gate: UiConfirmationGate
     ): ConfirmationGate
+
+    @Binds
+    @Singleton
+    abstract fun bindPendingConfirmationSource(
+        gate: UiConfirmationGate
+    ): PendingConfirmationSource
 
     @Binds
     @IntoSet

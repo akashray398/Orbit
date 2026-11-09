@@ -35,6 +35,7 @@ dependencies {
     implementation(project(":feature:onboarding"))
     implementation(project(":feature:chat"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:activity"))
 
     implementation(libs.androidx.core.ktx)
     implementation("androidx.core:core-splashscreen:1.0.1")
