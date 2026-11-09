@@ -59,7 +59,9 @@ data class ChatUiState(
     val spokenRepliesEnabled: Boolean = false,
     val autoSendVoice: Boolean = true,
     val keepScreenOn: Boolean = true,
-    val llmTestState: LlmTestDialogState = LlmTestDialogState()
+    val llmTestState: LlmTestDialogState = LlmTestDialogState(),
+    val showTraceDialog: Boolean = false,
+    val traceLogs: List<String> = emptyList()
 )
 
 @HiltViewModel
@@ -80,6 +82,7 @@ class ChatViewModel @Inject constructor(
     val isSpeaking: StateFlow<Boolean> = speechOutputController.isSpeaking
 
     private var streamingJob: Job? = null
+    private val inMemoryTrace = mutableListOf<String>()
 
     init {
         observeMessages()
@@ -236,6 +239,19 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun openAgentTrace() {
+        _uiState.update {
+            it.copy(
+                showTraceDialog = true,
+                traceLogs = inMemoryTrace.toList()
+            )
+        }
+    }
+
+    fun dismissTraceDialog() {
+        _uiState.update { it.copy(showTraceDialog = false) }
+    }
+
     fun dismissLlmTestDialog() {
         _uiState.update { it.copy(llmTestState = LlmTestDialogState()) }
     }
@@ -324,6 +340,7 @@ class ChatViewModel @Inject constructor(
 
             _uiState.update { it.copy(isStreaming = true) }
             chatRepository.addMessage(initialAgentMsg)
+            inMemoryTrace.add("User: $userText")
 
             var accumulatedText = ""
 
@@ -338,6 +355,12 @@ class ChatViewModel @Inject constructor(
                             }
                         }
                     }
+                    is AgentEvent.ToolStarted -> {
+                        inMemoryTrace.add("ToolStarted: ${event.toolName} -> ${event.describeText}")
+                    }
+                    is AgentEvent.ToolFinished -> {
+                        inMemoryTrace.add("ToolFinished: ${event.callId} status=${event.status} summary=${event.summary}")
+                    }
                     is AgentEvent.TextDelta -> {
                         accumulatedText += event.delta
                         chatRepository.updateMessage(agentMsgId) { msg ->
@@ -349,6 +372,7 @@ class ChatViewModel @Inject constructor(
                             msg.copy(status = ChatMessageStatus.Complete)
                         }
                         _uiState.update { it.copy(agentState = AgentState.Idle, isStreaming = false) }
+                        inMemoryTrace.add("Agent Completed: ${accumulatedText.take(60)}...")
 
                         if (_uiState.value.spokenRepliesEnabled && accumulatedText.isNotBlank()) {
                             speechOutputController.speak(accumulatedText, _uiState.value.voiceLocale)
@@ -363,7 +387,9 @@ class ChatViewModel @Inject constructor(
                             )
                         }
                         _uiState.update { it.copy(agentState = AgentState.Error(errorMsg), isStreaming = false) }
+                        inMemoryTrace.add("Agent Failed: $errorMsg")
                     }
+                    else -> {}
                 }
             }
         }
@@ -398,6 +424,7 @@ class ChatViewModel @Inject constructor(
     fun clearConversation() {
         streamingJob?.cancel()
         stopSpeaking()
+        inMemoryTrace.clear()
         _uiState.update { it.copy(agentState = AgentState.Idle, isStreaming = false) }
         viewModelScope.launch(dispatchers.io) {
             chatRepository.clearConversation()

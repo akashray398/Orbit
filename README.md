@@ -64,6 +64,32 @@ graph TD
 
 ---
 
+## How to Add a Tool
+
+To extend Orbit with a new tool:
+
+1. Implement the `Tool` interface in `core:domain` (or feature module):
+```kotlin
+class SampleTool @Inject constructor() : Tool {
+    override val spec = ToolSpec(
+        name = "sample_tool",
+        description = "Performs a sample action",
+        parametersJsonSchema = "{\"type\":\"object\",\"properties\":{}}"
+    )
+    override val riskLevel = RiskLevel.Low
+    override val displayLabel = "Executing sample action..."
+
+    override suspend fun execute(args: ToolArguments, ctx: ToolContext): ToolResult {
+        return ToolResult.Success(summary = "Sample action completed successfully")
+    }
+
+    override fun describeAction(args: ToolArguments) = "Run sample action"
+}
+```
+2. Bind the implementation into `Set<Tool>` using `@IntoSet` in Hilt `DataModule.kt`.
+
+---
+
 ## Data Layer & Persistence Security
 
 - **Room Persistence**: Stores conversations, messages, notes (with FTS4 full-text search), tasks, reminders, and action logs in `orbit_database.db`.
@@ -79,18 +105,6 @@ graph TD
 - **On-Device Preference**: On Android 13+ (API 33+), Orbit prefers `SpeechRecognizer.createOnDeviceSpeechRecognizer` for offline speech processing when supported by the device.
 - **Privacy Indicator**: Android 12+ (API 31+) displays a system green microphone indicator in the status bar whenever microphone audio is actively being sampled.
 - **Languages Supported**: English (`en-IN`), Hindi (`hi-IN`), and Punjabi (`pa-IN`).
-
----
-
-## Brand & Logo Guidelines
-
-The Orbit brand mark consists of a glowing tilted orbit ring surrounding a gradient core sphere with a revolving satellite dot.
-
-### Master Geometry Specification
-- **ViewBox**: 108 x 108
-- **Core Sphere**: Center `(54, 54)`, Radius `16dp`, Gradient `Electric Violet (#7C5CFF)` to `Cyan (#22D3EE)`
-- **Orbit Ring**: Center `(54, 54)`, Radius X `28dp`, Radius Y `12dp`, Tilt `-25°`, Gradient stroke with fade end
-- **Satellite Dot**: Orbiting point at radius `(28dp, 12dp)`
 
 ---
 
@@ -137,10 +151,10 @@ The Orbit brand mark consists of a glowing tilted orbit ring surrounding a gradi
 - [x] **Step 6: Chat and agent home screen**
 - [x] **Step 7: Voice input with live waveform and spoken replies**
 - [x] **Step 8: Data layer (Room, DataStore, repositories)**
-- [ ] **Step 9: AI Tool-Calling Engine Framework**
-- [ ] **Step 10: Reminders & Alarm Tool Implementation**
-- [ ] **Step 11: Notes & Memory Management Tooling**
-- [ ] **Step 12: Notification Summary & Digest Feature**
-- [ ] **Step 13: Feature Settings & Agent Preferences (feature:settings)**
-- [ ] **Step 14: End-to-End Integration, Accessibility & 60fps Optimization**
+- [x] **Step 9: LLM client and backend proxy**
+- [x] **Step 10: Agent loop and tool registry**
+- [ ] **Step 11: Reminders & Alarm Tool Implementation**
+- [ ] **Step 12: Notes & Memory Management Tooling**
+- [ ] **Step 13: Notification Summary & Digest Feature**
+- [ ] **Step 14: Feature Settings & Agent Preferences (feature:settings)**
 - [ ] **Step 15: Production Hardening, Release Build & Final Verification**

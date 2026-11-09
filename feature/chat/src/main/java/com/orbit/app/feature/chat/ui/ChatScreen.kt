@@ -67,6 +67,7 @@ import com.orbit.app.core.designsystem.motion.OrbitMotionTokens
 import com.orbit.app.core.designsystem.theme.OrbitTheme
 import com.orbit.app.core.domain.model.AgentState
 import com.orbit.app.core.domain.model.VoiceInputState
+import com.orbit.app.feature.chat.ui.components.AgentTraceDialog
 import com.orbit.app.feature.chat.ui.components.ChatInputBar
 import com.orbit.app.feature.chat.ui.components.ChatMessageItem
 import com.orbit.app.feature.chat.ui.components.LlmTestDialog
@@ -165,6 +166,13 @@ fun ChatScreen(
         )
     }
 
+    if (uiState.showTraceDialog) {
+        AgentTraceDialog(
+            traceLogs = uiState.traceLogs,
+            onDismissRequest = viewModel::dismissTraceDialog
+        )
+    }
+
     OrbitBackground(modifier = modifier) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -230,6 +238,13 @@ fun ChatScreen(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false }
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text("Debug: Agent Trace") },
+                                    onClick = {
+                                        showMenu = false
+                                        viewModel.openAgentTrace()
+                                    }
+                                )
                                 DropdownMenuItem(
                                     text = { Text("Debug: Test LLM Stream") },
                                     onClick = {

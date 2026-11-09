@@ -1,6 +1,6 @@
 package com.orbit.app.core.data.di
 
-import com.orbit.app.core.data.gateway.FakeAgentGateway
+import com.orbit.app.core.data.gateway.RealAgentGateway
 import com.orbit.app.core.data.network.LlmClientImpl
 import com.orbit.app.core.data.repository.ActionLogRepositoryImpl
 import com.orbit.app.core.data.repository.AgentSettingsRepositoryImpl
@@ -14,6 +14,8 @@ import com.orbit.app.core.data.repository.TaskRepositoryImpl
 import com.orbit.app.core.data.repository.VoiceSettingsRepositoryImpl
 import com.orbit.app.core.data.voice.AndroidSpeechOutputController
 import com.orbit.app.core.data.voice.AndroidVoiceInputController
+import com.orbit.app.core.domain.model.ConfirmationGate
+import com.orbit.app.core.domain.model.Tool
 import com.orbit.app.core.domain.repository.ActionLogRepository
 import com.orbit.app.core.domain.repository.AgentGateway
 import com.orbit.app.core.domain.repository.AgentSettingsRepository
@@ -28,10 +30,14 @@ import com.orbit.app.core.domain.repository.SpeechOutputController
 import com.orbit.app.core.domain.repository.TaskRepository
 import com.orbit.app.core.domain.repository.VoiceInputController
 import com.orbit.app.core.domain.repository.VoiceSettingsRepository
+import com.orbit.app.core.domain.tools.EchoDebugTool
+import com.orbit.app.core.domain.tools.GetCurrentTimeTool
+import com.orbit.app.core.domain.usecase.TemporaryConfirmationGate
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
 import javax.inject.Singleton
 
 @Module
@@ -47,8 +53,26 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindAgentGateway(
-        impl: FakeAgentGateway
+        impl: RealAgentGateway
     ): AgentGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindConfirmationGate(
+        impl: TemporaryConfirmationGate
+    ): ConfirmationGate
+
+    @Binds
+    @IntoSet
+    abstract fun bindGetCurrentTimeTool(
+        tool: GetCurrentTimeTool
+    ): Tool
+
+    @Binds
+    @IntoSet
+    abstract fun bindEchoDebugTool(
+        tool: EchoDebugTool
+    ): Tool
 
     @Binds
     @Singleton
