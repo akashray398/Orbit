@@ -1,17 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Audio & Network Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Manifest queries required on Android 11+ (API 30+) for SpeechRecognizer & TextToSpeech visibility -->
+    <!-- Batch 1 Tools Permissions -->
+    <!-- SET_ALARM: Normal permission granted at install for clock alarms and timers -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <!-- SCHEDULE_EXACT_ALARM: Required on API 31+ for exact reminder notifications -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- RECEIVE_BOOT_COMPLETED: Reschedules scheduled reminders after device reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- POST_NOTIFICATIONS: Required on API 33+ to display reminder notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- READ_CALENDAR & WRITE_CALENDAR: Direct insertion and conflict checking in user calendar -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
     <queries>
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.INSERT" />
+            <data android:mimeType="vnd.android.cursor.dir/event" />
         </intent>
     </queries>
 
@@ -24,6 +45,7 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Orbit.Splash">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -33,6 +55,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name="com.orbit.app.core.tools.receiver.ReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.orbit.app.core.tools.receiver.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
