@@ -3,6 +3,8 @@ package com.orbit.app
 import android.animation.ObjectAnimator
 import android.os.Build
 import android.os.Bundle
+import android.os.StrictMode
+import android.os.Trace
 import android.view.View
 import android.view.animation.AnticipateInterpolator
 import androidx.activity.ComponentActivity
@@ -38,6 +40,19 @@ class MainActivity : ComponentActivity() {
     lateinit var roomChatRepository: RoomChatRepositoryImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Trace.beginSection("MainActivity.onCreate")
+
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectDiskReads()
+                    .detectDiskWrites()
+                    .detectNetwork()
+                    .penaltyLog()
+                    .build()
+            )
+        }
+
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
@@ -96,5 +111,6 @@ class MainActivity : ComponentActivity() {
                 OrbitNavHost()
             }
         }
+        Trace.endSection()
     }
 }
