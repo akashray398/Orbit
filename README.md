@@ -141,4 +141,6 @@ class SampleTool @Inject constructor() : Tool {
 
 ---
 ### Developer
-```Akash Yadav 
+```Made and 🚀with 
+- Akash Yadav
+```
