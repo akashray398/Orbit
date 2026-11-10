@@ -140,21 +140,5 @@ class SampleTool @Inject constructor() : Tool {
 ```
 
 ---
-
-## Roadmap: 15 Steps Checklist
-
-- [x] **Step 1: Project setup and architecture**
-- [x] **Step 2: Core Design System & Theme Engine**
-- [x] **Step 3: Logo, adaptive launcher icon, and themed icon**
-- [x] **Step 4: Live-motion animated splash**
-- [x] **Step 5: Onboarding and permissions flow**
-- [x] **Step 6: Chat and agent home screen**
-- [x] **Step 7: Voice input with live waveform and spoken replies**
-- [x] **Step 8: Data layer (Room, DataStore, repositories)**
-- [x] **Step 9: LLM client and backend proxy**
-- [x] **Step 10: Agent loop and tool registry**
-- [ ] **Step 11: Reminders & Alarm Tool Implementation**
-- [ ] **Step 12: Notes & Memory Management Tooling**
-- [ ] **Step 13: Notification Summary & Digest Feature**
-- [ ] **Step 14: Feature Settings & Agent Preferences (feature:settings)**
-- [ ] **Step 15: Production Hardening, Release Build & Final Verification**
+### Developer
+```Akash Yadav 
