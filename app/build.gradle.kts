@@ -36,6 +36,8 @@ dependencies {
     implementation(project(":feature:chat"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:activity"))
+    implementation(project(":feature:today"))
+    implementation(project(":feature:routines"))
 
     implementation(libs.androidx.core.ktx)
     implementation("androidx.core:core-splashscreen:1.0.1")

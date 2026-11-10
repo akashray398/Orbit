@@ -12,6 +12,7 @@ import com.orbit.app.core.data.database.daos.MessageDao
 import com.orbit.app.core.data.database.daos.NoteDao
 import com.orbit.app.core.data.database.daos.NotificationDao
 import com.orbit.app.core.data.database.daos.ReminderDao
+import com.orbit.app.core.data.database.daos.RoutineDao
 import com.orbit.app.core.data.database.daos.TaskDao
 import com.orbit.app.core.data.database.entities.ActionLogEntity
 import com.orbit.app.core.data.database.entities.ConversationEntity
@@ -20,6 +21,8 @@ import com.orbit.app.core.data.database.entities.NoteEntity
 import com.orbit.app.core.data.database.entities.NoteFtsEntity
 import com.orbit.app.core.data.database.entities.NotificationEntity
 import com.orbit.app.core.data.database.entities.ReminderEntity
+import com.orbit.app.core.data.database.entities.RoutineEntity
+import com.orbit.app.core.data.database.entities.RoutineRunEntity
 import com.orbit.app.core.data.database.entities.TaskEntity
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -42,6 +45,44 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `routines` (
+                `id` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `type` TEXT NOT NULL,
+                `timeOfDay` TEXT NOT NULL,
+                `daysOfWeek` INTEGER NOT NULL,
+                `enabled` INTEGER NOT NULL,
+                `customPrompt` TEXT,
+                `lastRunAt` INTEGER,
+                `lastStatus` TEXT,
+                `createdAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `routine_runs` (
+                `id` TEXT NOT NULL,
+                `routineId` TEXT NOT NULL,
+                `startedAt` INTEGER NOT NULL,
+                `finishedAt` INTEGER,
+                `status` TEXT NOT NULL,
+                `resultText` TEXT NOT NULL,
+                `usedAi` INTEGER NOT NULL,
+                `tokenCount` INTEGER,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent()
+        )
+        db.execSQL("ALTER TABLE `action_logs` ADD COLUMN `source` TEXT NOT NULL DEFAULT 'Chat'")
+    }
+}
+
 @Database(
     entities = [
         ConversationEntity::class,
@@ -51,9 +92,11 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         TaskEntity::class,
         ReminderEntity::class,
         ActionLogEntity::class,
-        NotificationEntity::class
+        NotificationEntity::class,
+        RoutineEntity::class,
+        RoutineRunEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(OrbitTypeConverters::class)
@@ -65,4 +108,5 @@ abstract class OrbitDatabase : RoomDatabase() {
     abstract fun reminderDao(): ReminderDao
     abstract fun actionLogDao(): ActionLogDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun routineDao(): RoutineDao
 }

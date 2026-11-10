@@ -9,6 +9,7 @@ import com.orbit.app.core.tools.CompleteTaskTool
 import com.orbit.app.core.tools.CreateNoteTool
 import com.orbit.app.core.tools.CreateReminderTool
 import com.orbit.app.core.tools.GetDeviceStatusTool
+import com.orbit.app.core.tools.GetUpcomingEventsTool
 import com.orbit.app.core.tools.ListTasksTool
 import com.orbit.app.core.tools.OpenAppTool
 import com.orbit.app.core.tools.ReadNoteTool
@@ -90,4 +91,8 @@ abstract class ToolsModule {
     @Binds
     @IntoSet
     abstract fun bindSetDoNotDisturbTool(tool: SetDoNotDisturbTool): Tool
+
+    @Binds
+    @IntoSet
+    abstract fun bindGetUpcomingEventsTool(tool: GetUpcomingEventsTool): Tool
 }

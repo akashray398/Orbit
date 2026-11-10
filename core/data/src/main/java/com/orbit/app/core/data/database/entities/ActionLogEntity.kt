@@ -24,5 +24,6 @@ data class ActionLogEntity(
     val conversationId: String? = null,
     val messageId: String? = null,
     val undoPayloadJson: String? = null,
-    val undoneAt: Long? = null
+    val undoneAt: Long? = null,
+    val source: String = "Chat"
 )
