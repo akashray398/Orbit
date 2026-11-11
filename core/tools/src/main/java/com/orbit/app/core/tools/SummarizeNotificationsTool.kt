@@ -33,13 +33,13 @@ class SummarizeNotificationsTool @Inject constructor(
     override val returnsUntrustedContent: Boolean = true
 
     override suspend fun execute(args: ToolArguments, ctx: ToolContext): ToolResult {
-        val hours = args.getInt("sinceHours")
-        val maxItems = args.getInt("maxItems")
+        val hours = args.getInt("sinceHours", default = 12)
+        val maxItems = args.getInt("maxItems", default = 20)
         val cutoff = System.currentTimeMillis() - (hours * 3600000L)
 
         val notifications = notificationDao.getRecentNotifications(cutoff, maxItems)
         if (notifications.isEmpty()) {
-            return ToolResult.Success("No notifications captured in the last $hours hours.")
+            return ToolResult.Success("No notifications captured in the last $hours hours. Make sure notification listener permission is enabled in Settings.")
         }
 
         val grouped = notifications.groupBy { it.appLabel }

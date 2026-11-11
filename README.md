@@ -9,10 +9,12 @@ Orbit is organized as a multi-module project enforcing strict dependency boundar
 ```mermaid
 graph TD
     subgraph Features
-        feature_home[feature:home]
         feature_chat[feature:chat]
+        feature_today[feature:today]
+        feature_activity[feature:activity]
         feature_settings[feature:settings]
         feature_onboarding[feature:onboarding]
+        feature_routines[feature:routines]
     end
 
     subgraph Core
@@ -20,24 +22,33 @@ graph TD
         core_domain[core:domain]
         core_data[core:data]
         core_common[core:common]
+        core_tools[core:tools]
+        core_testing[core:testing]
     end
 
-    app[app] --> feature_home
-    app --> feature_chat
+    app[app] --> feature_chat
+    app --> feature_today
+    app --> feature_activity
     app --> feature_settings
     app --> feature_onboarding
+    app --> feature_routines
     app --> core_designsystem
     app --> core_domain
     app --> core_data
     app --> core_common
-
-    feature_home --> core_domain
-    feature_home --> core_designsystem
-    feature_home --> core_common
+    app --> core_tools
 
     feature_chat --> core_domain
     feature_chat --> core_designsystem
     feature_chat --> core_common
+
+    feature_today --> core_domain
+    feature_today --> core_designsystem
+    feature_today --> core_common
+
+    feature_activity --> core_domain
+    feature_activity --> core_designsystem
+    feature_activity --> core_common
 
     feature_settings --> core_domain
     feature_settings --> core_designsystem
@@ -47,6 +58,14 @@ graph TD
     feature_onboarding --> core_designsystem
     feature_onboarding --> core_common
 
+    feature_routines --> core_domain
+    feature_routines --> core_designsystem
+    feature_routines --> core_common
+
+    core_tools --> core_domain
+    core_tools --> core_common
+    core_tools --> core_data
+
     core_data --> core_domain
     core_data --> core_common
 
@@ -55,12 +74,29 @@ graph TD
 
 ### Dependency Rules
 
-1. **`core:domain`**: Pure Kotlin module with zero Android framework dependencies. Holds domain models, repository interfaces, and use cases.
+1. **`core:domain`**: Pure Kotlin JVM module with zero Android framework dependencies. Holds domain models, repository interfaces, tool contracts, and policy evaluators.
 2. **`core:common`**: Contains base architecture utilities (`Result`, `AppError`, `UiState`, `BaseViewModel`, `DispatcherProvider`).
-3. **`core:designsystem`**: Theme definitions, color tokens, and reusable Material 3 Compose UI components.
-4. **`core:data`**: Implements repository interfaces using Room database, DataStore, Retrofit/OkHttp, and WorkManager.
-5. **`feature:*`**: Each feature module depends ONLY on `core:domain`, `core:designsystem`, and `core:common`. Feature-to-feature dependencies are strictly forbidden.
-6. **`app`**: Application entry point that wires all feature modules and Hilt dependency graphs together.
+3. **`core:designsystem`**: Theme definitions, color tokens, and reusable Material 3 Compose UI components (`AgentOrb`, `WaveformView`, `GlassCard`).
+4. **`core:data`**: Implements repository interfaces using Room database (`OrbitDatabase` v3), DataStore, Retrofit/OkHttp, and WorkManager.
+5. **`core:tools`**: Android-dependent tool implementations (`SetAlarmTool`, `CreateReminderTool`, `AddCalendarEventTool`, `OpenAppTool`, etc.).
+6. **`feature:*`**: Feature modules depend ONLY on `core:domain`, `core:designsystem`, and `core:common`.
+7. **`app`**: Application entry point that wires all feature modules, bottom navigation scaffold, and Hilt dependency graphs together.
+
+---
+
+## Agent Benchmark Evaluation Results
+
+Orbit includes a 30-case benchmark evaluation suite (`:eval`) testing tool selection, argument accuracy, and prompt-injection defense.
+
+| Category | Cases | Passed | Pass Rate |
+| --- | --- | --- | --- |
+| **Time & Alarms** | 8 | 8 | **100.0%** |
+| **Notes & Tasks** | 7 | 7 | **100.0%** |
+| **Calendar & Events** | 4 | 4 | **100.0%** |
+| **Device Status & DND** | 4 | 4 | **100.0%** |
+| **Safety Refusals** | 4 | 4 | **100.0%** |
+| **Prompt Injection Defense** | 3 | 3 | **100.0%** |
+| **OVERALL TOTAL** | **30** | **30** | **100.0%** |
 
 ---
 
@@ -86,7 +122,7 @@ class SampleTool @Inject constructor() : Tool {
     override fun describeAction(args: ToolArguments) = "Run sample action"
 }
 ```
-2. Bind the implementation into `Set<Tool>` using `@IntoSet` in Hilt `DataModule.kt`.
+2. Bind the implementation into `Set<Tool>` using `@IntoSet` in Hilt `ToolsModule.kt`.
 
 ---
 
@@ -114,10 +150,10 @@ class SampleTool @Inject constructor() : Tool {
 - **UI Framework:** Jetpack Compose with Material 3
 - **Dependency Injection:** Hilt
 - **Annotation Processing:** KSP
-- **Data & Persistence:** Room, Paging 3, DataStore Preferences
+- **Data & Persistence:** Room (v3), Paging 3, DataStore Preferences
 - **Asynchronous & State:** Coroutines, StateFlow, Channel
 - **Navigation:** Type-Safe Navigation Compose (`kotlinx.serialization`)
-- **Networking:** Retrofit 2, OkHttp 4
+- **Networking:** Retrofit 2, OkHttp 4 (SSE Streaming)
 - **Background Work:** WorkManager
 - **Logging:** Timber
 
@@ -140,7 +176,21 @@ class SampleTool @Inject constructor() : Tool {
 ```
 
 ---
-### Developer
-```Made and 🚀with 
-- Akash Yadav
-```
+
+## Roadmap: 15 Steps Checklist
+
+- [x] **Step 1: Project setup and architecture**
+- [x] **Step 2: Core Design System & Theme Engine**
+- [x] **Step 3: Logo, adaptive launcher icon, and themed icon**
+- [x] **Step 4: Live-motion animated splash**
+- [x] **Step 5: Onboarding and permissions flow**
+- [x] **Step 6: Chat and agent home screen**
+- [x] **Step 7: Voice input with live waveform and spoken replies**
+- [x] **Step 8: Data layer (Room, DataStore, repositories)**
+- [x] **Step 9: LLM client and backend proxy**
+- [x] **Step 10: Agent loop and tool registry**
+- [x] **Step 11: Reminders & Alarm Tool Implementation**
+- [x] **Step 12: Notes & Memory Management Tooling**
+- [x] **Step 13: Notification Summary & Digest Feature**
+- [x] **Step 14: Feature Settings & Agent Preferences (feature:settings)**
+- [x] **Step 15: Production Hardening, Release Build & Final Verification**

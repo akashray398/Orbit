@@ -85,7 +85,9 @@ fun ChatMessageItem(
         when (message.role) {
             ChatMessageRole.User -> {
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 48.dp, end = 4.dp),
                     contentAlignment = Alignment.CenterEnd
                 ) {
                     Box(
@@ -132,15 +134,17 @@ fun ChatMessageItem(
 
             ChatMessageRole.Agent -> {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 48.dp),
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.Top
                 ) {
                     AgentOrb(
                         state = AgentState.Idle,
-                        size = 32.dp
+                        size = 36.dp
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
                     Column {
                         GlassCard(

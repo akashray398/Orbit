@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -108,8 +109,16 @@ fun ChatScreen(
         }
     }
 
+    LaunchedEffect(uiState.snackbarMessage) {
+        val msg = uiState.snackbarMessage
+        if (msg != null) {
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearSnackbarNotice()
+        }
+    }
+
     val orbSize by animateDpAsState(
-        targetValue = if (isEmpty) 130.dp else 40.dp,
+        targetValue = if (isEmpty) 130.dp else 36.dp,
         animationSpec = OrbitMotionTokens.bouncy(),
         label = "orbSizeAnimation"
     )
@@ -188,6 +197,7 @@ fun ChatScreen(
         Scaffold(
             containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(snackbarHostState) },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = {
                 Column {
                     if (!uiState.isOnline) {
@@ -221,7 +231,7 @@ fun ChatScreen(
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                 } else {
-                                    OrbitLogo(size = 32.dp, mode = OrbitLogoMode.Mark)
+                                    OrbitLogo(size = 28.dp, mode = OrbitLogoMode.Mark)
                                     Spacer(modifier = Modifier.width(10.dp))
                                 }
                                 Column {
@@ -300,6 +310,7 @@ fun ChatScreen(
                                 )
                             }
                         },
+                        windowInsets = WindowInsets(0, 0, 0, 0),
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                     )
                 }
@@ -391,8 +402,8 @@ fun ChatScreen(
                                 )
                             }
 
-                            // Suggestions underneath last agent message
-                            if (!uiState.isStreaming) {
+                            // Suggestions underneath last agent message ONLY when agent is Idle and not streaming
+                            if (!uiState.isStreaming && uiState.agentState is AgentState.Idle) {
                                 item {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     FlowRow(

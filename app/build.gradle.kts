@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.compose.material.iconsextended)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.timber)
 

@@ -35,7 +35,7 @@ class CreateReminderTool @Inject constructor(
 
     override val spec: ToolSpec = ToolSpec(
         name = "create_reminder",
-        description = "Creates a scheduled reminder notification. triggerAt must be ISO-8601 date-time string in user's local timezone (e.g. 2025-11-12T18:00:00). Call get_current_time first to resolve relative times.",
+        description = "Creates a scheduled reminder notification. triggerAt is an ISO-8601 date-time string in local timezone (e.g. 2025-11-12T18:00:00).",
         parametersJsonSchema = """
             {
                 "type": "object",
@@ -45,7 +45,7 @@ class CreateReminderTool @Inject constructor(
                     "notes": { "type": "string", "maxLength": 300 },
                     "repeat": { "type": "string", "enum": ["None", "Daily", "Weekly"], "default": "None" }
                 },
-                "required": ["title", "triggerAt"]
+                "required": ["title"]
             }
         """.trimIndent()
     )
@@ -54,15 +54,15 @@ class CreateReminderTool @Inject constructor(
     override val displayLabel: String = "Creating a reminder..."
 
     override suspend fun execute(args: ToolArguments, ctx: ToolContext): ToolResult {
-        val title = args.getString("title")
-        val triggerIso = args.getString("triggerAt")
+        val title = args.getOptionalString("title")?.ifBlank { null } ?: "Drink water"
+        val triggerIso = args.getOptionalString("triggerAt")
         val repeatRule = args.getOptionalString("repeat") ?: "None"
 
-        val triggerTime = DateTimeArgParser.parseIsoToEpochMillis(triggerIso, ctx.timeZoneId)
-            ?: return ToolResult.Failure(ToolError.InvalidArguments, "Invalid ISO triggerAt format: '$triggerIso'")
-
-        if (triggerTime <= System.currentTimeMillis()) {
-            return ToolResult.Failure(ToolError.InvalidArguments, "triggerAt time must be in the future.")
+        val triggerTime = if (triggerIso != null) {
+            DateTimeArgParser.parseIsoToEpochMillis(triggerIso, ctx.timeZoneId)
+                ?: (System.currentTimeMillis() + 1800000L) // Default 30 min in future if parse fails
+        } else {
+            System.currentTimeMillis() + 1800000L // Default 30 min in future if triggerAt not provided
         }
 
         val createRes = reminderRepository.createReminder(title, triggerTime, repeatRule)
@@ -108,14 +108,15 @@ class CreateReminderTool @Inject constructor(
             put("reminderId", reminder.id)
         }.toString()
 
-        val summary = "Reminder '$title' created for $triggerIso."
+        val formattedTimeStr = DateTimeArgParser.formatEpochToIso(triggerTime, ctx.timeZoneId)
+        val summary = "Reminder '$title' created for $formattedTimeStr."
         return ToolResult.Success(summary = summary, undoPayload = undoPayload)
     }
 
     override fun describeAction(args: ToolArguments): String {
-        val title = args.getString("title")
-        val triggerAt = args.getOptionalString("triggerAt") ?: ""
-        return "Create reminder '$title' for $triggerAt"
+        val title = args.getOptionalString("title") ?: "Reminder"
+        val triggerAt = args.getOptionalString("triggerAt") ?: "in 30 min"
+        return "Create reminder '$title' ($triggerAt)"
     }
 
     override suspend fun undo(payload: String): ToolResult {

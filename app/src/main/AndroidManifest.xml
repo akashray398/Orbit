@@ -15,7 +15,6 @@
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
     <!-- Batch 2 Tools Permissions -->
-    <!-- ACCESS_NOTIFICATION_POLICY: Required to toggle Do Not Disturb mode -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
     <queries>
@@ -79,6 +78,34 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name="com.orbit.app.assistant.OrbitVoiceInteractionService"
+            android:label="Orbit Assistant"
+            android:permission="android.permission.BIND_VOICE_INTERACTION_SERVICE"
+            android:exported="true">
+            <meta-data
+                android:name="android.voice_interaction"
+                android:resource="@xml/voice_interaction_service" />
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name="com.orbit.app.assistant.OrbitVoiceSessionService"
+            android:permission="android.permission.BIND_VOICE_INTERACTION_SERVICE"
+            android:exported="true" />
+
+        <activity
+            android:name="com.orbit.app.assistant.AssistActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Orbit.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
     </application>
 

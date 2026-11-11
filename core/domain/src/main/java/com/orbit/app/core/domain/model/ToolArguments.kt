@@ -21,17 +21,30 @@ class ToolArguments(val jsonObject: JsonObject) {
     }
 
     fun getInt(key: String): Int {
-        return jsonObject[key]?.jsonPrimitive?.intOrNull
+        val prim = jsonObject[key]?.jsonPrimitive
+        return prim?.intOrNull ?: prim?.content?.toIntOrNull()
             ?: throw ToolArgumentException("Missing or invalid int parameter: '$key'")
     }
 
+    fun getInt(key: String, default: Int): Int {
+        val prim = jsonObject[key]?.jsonPrimitive
+        return prim?.intOrNull ?: prim?.content?.toIntOrNull() ?: default
+    }
+
     fun getLong(key: String): Long {
-        return jsonObject[key]?.jsonPrimitive?.longOrNull
+        val prim = jsonObject[key]?.jsonPrimitive
+        return prim?.longOrNull ?: prim?.content?.toLongOrNull()
             ?: throw ToolArgumentException("Missing or invalid long parameter: '$key'")
     }
 
+    fun getLong(key: String, default: Long): Long {
+        val prim = jsonObject[key]?.jsonPrimitive
+        return prim?.longOrNull ?: prim?.content?.toLongOrNull() ?: default
+    }
+
     fun getBoolean(key: String, default: Boolean = false): Boolean {
-        return jsonObject[key]?.jsonPrimitive?.booleanOrNull ?: default
+        val prim = jsonObject[key]?.jsonPrimitive
+        return prim?.booleanOrNull ?: prim?.content?.toBooleanStrictOrNull() ?: default
     }
 
     companion object {

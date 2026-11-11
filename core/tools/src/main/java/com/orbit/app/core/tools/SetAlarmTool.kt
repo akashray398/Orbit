@@ -38,8 +38,8 @@ class SetAlarmTool @Inject constructor(
     override val displayLabel: String = "Setting an alarm..."
 
     override suspend fun execute(args: ToolArguments, ctx: ToolContext): ToolResult {
-        val hour = args.getInt("hour")
-        val minute = args.getInt("minute")
+        val hour = args.getInt("hour", default = 9)
+        val minute = args.getInt("minute", default = 0)
         val label = args.getOptionalString("label") ?: "Orbit Alarm"
         val skipUi = args.getBoolean("skipUi", default = true)
 
@@ -63,8 +63,8 @@ class SetAlarmTool @Inject constructor(
     }
 
     override fun describeAction(args: ToolArguments): String {
-        val hour = args.getInt("hour")
-        val minute = args.getInt("minute")
+        val hour = args.getInt("hour", default = 9)
+        val minute = args.getInt("minute", default = 0)
         val label = args.getOptionalString("label") ?: "Alarm"
         return "Set alarm for ${String.format("%02d:%02d", hour, minute)} ($label)"
     }

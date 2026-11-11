@@ -5,21 +5,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-/*
- * WCAG AA Contrast Verification Notes:
- * ------------------------------------
- * Dark Theme:
- * - Background (#070B1A) vs OnBackground (#F8FAFC): Contrast Ratio ~ 18.5:1 (Exceeds 4.5:1 AA body text)
- * - Surface (#0F172A) vs OnSurface (#F8FAFC): Contrast Ratio ~ 16.2:1 (Exceeds 4.5:1 AA body text)
- * - Primary Violet (#7C5CFF) vs Background (#070B1A): Contrast Ratio ~ 8.2:1 (Exceeds 4.5:1 AA text)
- * - Secondary Cyan (#22D3EE) vs Background (#070B1A): Contrast Ratio ~ 11.4:1 (Exceeds 4.5:1 AA text)
- *
- * Light Theme:
- * - Background (#F8FAFC) vs OnBackground (#0F172A): Contrast Ratio ~ 17.8:1 (Exceeds 4.5:1 AA body text)
- * - Primary Violet (#6D28D9) vs Background (#F8FAFC): Contrast Ratio ~ 7.9:1 (Exceeds 4.5:1 AA text)
- * - Secondary Cyan (#0891B2) vs Background (#F8FAFC): Contrast Ratio ~ 4.8:1 (Exceeds 4.5:1 AA text)
- */
-
 // Core Brand Palette Tokens
 val DarkBackground = Color(0xFF070B1A)
 val DarkSurface = Color(0xFF0F172A)
@@ -63,9 +48,9 @@ data class OrbitColors(
 )
 
 val DarkOrbitColors = OrbitColors(
-    glassFill = Color(0x1A1E293B),
-    glassBorderStart = Color(0x4D7C5CFF),
-    glassBorderEnd = Color(0x1A22D3EE),
+    glassFill = Color(0xEE0F172A), // High opacity 93% Slate Dark Surface for high contrast
+    glassBorderStart = Color(0x667C5CFF),
+    glassBorderEnd = Color(0x3322D3EE),
     glowPrimary = Color(0x337C5CFF),
     glowSecondary = Color(0x3322D3EE),
     success = SuccessGreen,
@@ -81,7 +66,7 @@ val DarkOrbitColors = OrbitColors(
 )
 
 val LightOrbitColors = OrbitColors(
-    glassFill = Color(0xCCFFFFFF),
+    glassFill = Color(0xF2FFFFFF), // High opacity 95% White Surface
     glassBorderStart = Color(0x336D28D9),
     glassBorderEnd = Color(0x1A0891B2),
     glowPrimary = Color(0x1A6D28D9),

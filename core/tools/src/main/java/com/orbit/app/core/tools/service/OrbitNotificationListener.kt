@@ -5,11 +5,9 @@ import android.service.notification.StatusBarNotification
 import com.orbit.app.core.data.database.daos.NotificationDao
 import com.orbit.app.core.data.database.entities.NotificationEntity
 import com.orbit.app.core.domain.model.Redactor
-import com.orbit.app.core.domain.repository.AgentSettingsRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,9 +16,6 @@ class OrbitNotificationListener : NotificationListenerService() {
 
     @Inject
     lateinit var notificationDao: NotificationDao
-
-    @Inject
-    lateinit var agentSettingsRepository: AgentSettingsRepository
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private val sensitivePackageKeywords = listOf("bank", "upi", "wallet", "paytm", "gpay", "pass", "vault", "auth")
@@ -35,13 +30,9 @@ class OrbitNotificationListener : NotificationListenerService() {
         if (sensitivePackageKeywords.any { packageName.lowercase().contains(it) }) return
 
         scope.launch {
-            val settings = agentSettingsRepository.agentSettings.first()
-            val enabled = settings.confirmMediumRisk
-            if (!enabled) return@launch
-
             val extras = sbn.notification?.extras ?: return@launch
-            val rawTitle = extras.getCharSequence("android.title")?.toString() ?: ""
-            val rawText = extras.getCharSequence("android.text")?.toString() ?: ""
+            val rawTitle = extras.getCharSequence("android.title")?.toString() ?: extras.getCharSequence("android.titleBig")?.toString() ?: ""
+            val rawText = extras.getCharSequence("android.text")?.toString() ?: extras.getCharSequence("android.bigText")?.toString() ?: ""
 
             if (rawTitle.isEmpty() && rawText.isEmpty()) return@launch
 

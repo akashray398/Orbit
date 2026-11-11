@@ -1,6 +1,7 @@
 package com.orbit.app.core.data.di
 
 import com.orbit.app.core.data.gateway.RealAgentGateway
+import com.orbit.app.core.data.logging.CrashReporterImpl
 import com.orbit.app.core.data.network.LlmClientImpl
 import com.orbit.app.core.data.repository.ActionLogRepositoryImpl
 import com.orbit.app.core.data.repository.AgentSettingsRepositoryImpl
@@ -21,6 +22,7 @@ import com.orbit.app.core.domain.repository.AgentGateway
 import com.orbit.app.core.domain.repository.AgentSettingsRepository
 import com.orbit.app.core.domain.repository.AppSettingsRepository
 import com.orbit.app.core.domain.repository.ChatRepository
+import com.orbit.app.core.domain.repository.CrashReporter
 import com.orbit.app.core.domain.repository.DataMaintenanceRepository
 import com.orbit.app.core.domain.repository.LlmClient
 import com.orbit.app.core.domain.repository.NoteRepository
@@ -152,4 +154,10 @@ abstract class DataModule {
     abstract fun bindVoiceSettingsRepository(
         impl: VoiceSettingsRepositoryImpl
     ): VoiceSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCrashReporter(
+        impl: CrashReporterImpl
+    ): CrashReporter
 }

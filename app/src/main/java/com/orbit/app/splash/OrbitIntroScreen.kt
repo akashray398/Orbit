@@ -42,23 +42,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.sin
 
-/**
- * Architectural Justification for Location:
- * The `app` module owns `OrbitIntroScreen` because launch sequence orchestration,
- * process-level cold start state tracking, and initial route decisions belong exclusively
- * to the application container, keeping feature modules strictly decoupled.
- */
-
-/*
- * Launch Sequence Documentation:
- * ------------------------------
- * 1. System Splash (androidx.core:core-splashscreen): Displays navy window background
- *    and animated vector drawable on Android 12+ while Hilt/App initialization runs.
- * 2. Compose Intro Scene (OrbitIntroScreen): Executes a 4-phase 60fps timeline (ring sweep,
- *    core scale, particle drift, wordmark slide) after the first Compose frame renders.
- * 3. Destination Navigation: Fades smoothly into OnboardingRoute (stub) or HomeRoute.
- */
-
 private data class IntroParticle(
     val angleRad: Float,
     val speed: Float,
@@ -75,7 +58,6 @@ fun OrbitIntroScreen(
     val scope = rememberCoroutineScope()
     val themeColors = OrbitTheme.colors
 
-    // Deterministic fixed-size particle array (zero per-frame allocation)
     val particles = remember {
         Array(SplashMotionSpec.ParticleCount) { index ->
             val angle = (index * (360f / SplashMotionSpec.ParticleCount)) * (Math.PI / 180f).toFloat()
@@ -85,25 +67,19 @@ fun OrbitIntroScreen(
         }
     }
 
-    LaunchedEffect(reducedMotion) {
-        if (reducedMotion) {
-            progress.snapTo(1f)
-            onIntroComplete()
-        } else {
-            progress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = SplashMotionSpec.TotalIntroDurationMs,
-                    easing = OrbitMotionTokens.EasingLinear
-                )
+    LaunchedEffect(Unit) {
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = SplashMotionSpec.TotalIntroDurationMs,
+                easing = OrbitMotionTokens.EasingLinear
             )
-            onIntroComplete()
-        }
+        )
+        onIntroComplete()
     }
 
     val currentProgress = progress.value
     val elapsedTimeMs = (currentProgress * SplashMotionSpec.TotalIntroDurationMs).toLong()
-
     val isTapToSkipAvailable = elapsedTimeMs >= SplashMotionSpec.TapToSkipThresholdMs
 
     OrbitBackground(
@@ -124,152 +100,146 @@ fun OrbitIntroScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            // Calculated Timeline Phase Values
             val p = currentProgress
 
-            // Phase 1: Ring Sweep (0.0 .. 0.35)
             val ringSweepProgress = ((p - 0.0f) / SplashMotionSpec.Phase1End).coerceIn(0f, 1f)
-
-            // Phase 2: Core Scale & Satellite Orbit (0.17 .. 0.65)
             val coreScaleProgress = ((p - SplashMotionSpec.Phase2Start) / (SplashMotionSpec.Phase2End - SplashMotionSpec.Phase2Start)).coerceIn(0f, 1f)
             val coreScale = if (reducedMotion) 1f else (coreScaleProgress * 1.08f).coerceAtMost(1f)
-
-            // Phase 3: Pulse & Drift Particles (0.41 .. 0.82)
             val pulseProgress = ((p - SplashMotionSpec.Phase3Start) / (SplashMotionSpec.Phase3End - SplashMotionSpec.Phase3Start)).coerceIn(0f, 1f)
-
-            // Phase 4: Wordmark & Tagline (0.65 .. 1.0)
             val textProgress = ((p - SplashMotionSpec.Phase4Start) / (SplashMotionSpec.Phase4End - SplashMotionSpec.Phase4Start)).coerceIn(0f, 1f)
             val textAlpha = if (reducedMotion) 1f else textProgress
-            val textOffsetY = if (reducedMotion) 0f else (1f - textProgress) * 24f
-            val letterSpacing = if (reducedMotion) 2.sp else ((1f - textProgress) * 6 + 2).sp
+            val textOffsetY = if (reducedMotion) 0f else (1f - textProgress) * 20f
 
-            // Pre-allocated Path & PathMeasure for Canvas
             val fullOvalPath = remember { Path() }
             val segmentPath = remember { Path() }
             val pathMeasure = remember { PathMeasure() }
 
-            Canvas(modifier = Modifier.size(200.dp)) {
-                val center = Offset(size.width / 2f, size.height / 2f)
-                val scale = size.width / OrbitLogoGeometry.ViewBoxSize
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Animated Glowing Logo
+                Canvas(modifier = Modifier.size(180.dp)) {
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val scale = size.width / OrbitLogoGeometry.ViewBoxSize
 
-                val coreRadiusPx = OrbitLogoGeometry.CoreRadius * scale * coreScale
-                val ringRxPx = OrbitLogoGeometry.RingRx * scale
-                val ringRyPx = OrbitLogoGeometry.RingRy * scale
-                val strokeWidthPx = 3.5f * scale
+                    val coreRadiusPx = OrbitLogoGeometry.CoreRadius * scale * coreScale
+                    val ringRxPx = OrbitLogoGeometry.RingRx * scale
+                    val ringRyPx = OrbitLogoGeometry.RingRy * scale
+                    val strokeWidthPx = 3.5f * scale
 
-                // Phase 3: Draw Pulse Ring
-                if (!reducedMotion && pulseProgress > 0f && pulseProgress < 1f) {
-                    val pulseRadius = coreRadiusPx + pulseProgress * (size.width * 0.35f)
-                    val pulseAlpha = (1f - pulseProgress) * 0.4f
-                    drawCircle(
-                        color = themeColors.glowPrimary.copy(alpha = pulseAlpha),
-                        radius = pulseRadius,
-                        center = center
-                    )
-                }
-
-                // Phase 3: Draw Particles Drift
-                if (!reducedMotion && pulseProgress > 0f) {
-                    for (particle in particles) {
-                        val dist = pulseProgress * particle.speed * scale
-                        val px = center.x + cos(particle.angleRad.toDouble()).toFloat() * (coreRadiusPx + dist)
-                        val py = center.y + sin(particle.angleRad.toDouble()).toFloat() * (coreRadiusPx + dist)
-                        val particleAlpha = (1f - pulseProgress) * 0.7f
+                    // Phase 3: Pulse Ring
+                    if (!reducedMotion && pulseProgress > 0f && pulseProgress < 1f) {
+                        val pulseRadius = coreRadiusPx + pulseProgress * (size.width * 0.35f)
+                        val pulseAlpha = (1f - pulseProgress) * 0.4f
                         drawCircle(
-                            color = themeColors.glowSecondary.copy(alpha = particleAlpha),
-                            radius = particle.radius * scale,
-                            center = Offset(px, py)
+                            color = themeColors.glowPrimary.copy(alpha = pulseAlpha),
+                            radius = pulseRadius,
+                            center = center
                         )
                     }
-                }
 
-                // Phase 2: Draw Core Sphere
-                if (coreScale > 0f) {
-                    drawCircle(
-                        brush = themeColors.primaryGradient,
-                        radius = coreRadiusPx,
-                        center = center
-                    )
-                }
-
-                // Phase 1 & 2: Draw Tilted Ring with PathMeasure Sweep
-                if (ringSweepProgress > 0f) {
-                    rotate(degrees = OrbitLogoGeometry.RingTiltDegrees, pivot = center) {
-                        fullOvalPath.reset()
-                        fullOvalPath.addOval(
-                            androidx.compose.ui.geometry.Rect(
-                                center.x - ringRxPx,
-                                center.y - ringRyPx,
-                                center.x + ringRxPx,
-                                center.y + ringRyPx
-                            )
-                        )
-
-                        pathMeasure.setPath(fullOvalPath, false)
-                        val totalLength = pathMeasure.length
-                        segmentPath.reset()
-                        pathMeasure.getSegment(0f, totalLength * ringSweepProgress, segmentPath, true)
-
-                        drawPath(
-                            path = segmentPath,
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    themeColors.glassBorderStart,
-                                    themeColors.glassBorderEnd,
-                                    themeColors.glassBorderEnd.copy(alpha = 0.1f)
-                                )
-                            ),
-                            style = Stroke(width = strokeWidthPx)
-                        )
-
-                        // Phase 2: Draw Traveling Satellite
-                        if (coreScaleProgress > 0.2f) {
-                            val satAngleRad = (ringSweepProgress * 360f) * (Math.PI / 180f).toFloat()
-                            val satX = center.x + ringRxPx * cos(satAngleRad.toDouble()).toFloat()
-                            val satY = center.y + ringRyPx * sin(satAngleRad.toDouble()).toFloat()
-                            val satRadius = OrbitLogoGeometry.SatelliteRadius * scale
-
+                    // Phase 3: Particles
+                    if (!reducedMotion && pulseProgress > 0f) {
+                        for (particle in particles) {
+                            val dist = pulseProgress * particle.speed * scale
+                            val px = center.x + cos(particle.angleRad.toDouble()).toFloat() * (coreRadiusPx + dist)
+                            val py = center.y + sin(particle.angleRad.toDouble()).toFloat() * (coreRadiusPx + dist)
+                            val particleAlpha = (1f - pulseProgress) * 0.7f
                             drawCircle(
-                                color = themeColors.glowSecondary,
-                                radius = satRadius,
-                                center = Offset(satX, satY)
-                            )
-                            drawCircle(
-                                color = Color.White,
-                                radius = satRadius * 0.4f,
-                                center = Offset(satX, satY)
+                                color = themeColors.glowSecondary.copy(alpha = particleAlpha),
+                                radius = particle.radius * scale,
+                                center = Offset(px, py)
                             )
                         }
                     }
-                }
-            }
 
-            // Phase 4: Wordmark & Tagline Layout
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .graphicsLayer {
+                    // Phase 2: Core Sphere
+                    if (coreScale > 0f) {
+                        drawCircle(
+                            brush = themeColors.primaryGradient,
+                            radius = coreRadiusPx,
+                            center = center
+                        )
+                    }
+
+                    // Phase 1 & 2: Ring Sweep
+                    if (ringSweepProgress > 0f) {
+                        rotate(degrees = OrbitLogoGeometry.RingTiltDegrees, pivot = center) {
+                            fullOvalPath.reset()
+                            fullOvalPath.addOval(
+                                androidx.compose.ui.geometry.Rect(
+                                    center.x - ringRxPx,
+                                    center.y - ringRyPx,
+                                    center.x + ringRxPx,
+                                    center.y + ringRyPx
+                                )
+                            )
+
+                            pathMeasure.setPath(fullOvalPath, false)
+                            val totalLength = pathMeasure.length
+                            segmentPath.reset()
+                            pathMeasure.getSegment(0f, totalLength * ringSweepProgress, segmentPath, true)
+
+                            drawPath(
+                                path = segmentPath,
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        themeColors.glassBorderStart,
+                                        themeColors.glassBorderEnd,
+                                        themeColors.glassBorderEnd.copy(alpha = 0.1f)
+                                    )
+                                ),
+                                style = Stroke(width = strokeWidthPx)
+                            )
+
+                            if (coreScaleProgress > 0.2f) {
+                                val satAngleRad = (ringSweepProgress * 360f) * (Math.PI / 180f).toFloat()
+                                val satX = center.x + ringRxPx * cos(satAngleRad.toDouble()).toFloat()
+                                val satY = center.y + ringRyPx * sin(satAngleRad.toDouble()).toFloat()
+                                val satRadius = OrbitLogoGeometry.SatelliteRadius * scale
+
+                                drawCircle(
+                                    color = themeColors.glowSecondary,
+                                    radius = satRadius,
+                                    center = Offset(satX, satY)
+                                )
+                                drawCircle(
+                                    color = Color.White,
+                                    radius = satRadius * 0.4f,
+                                    center = Offset(satX, satY)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Wordmark "Orbit" & Description Tagline
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.graphicsLayer {
                         alpha = textAlpha
                         translationY = textOffsetY
                     }
-            ) {
-                Spacer(modifier = Modifier.height(140.dp))
-                Text(
-                    text = "Orbit",
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontFamily = DisplayFontFamily,
-                        letterSpacing = letterSpacing,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Your phone, on autopilot.",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
-                )
+                ) {
+                    Text(
+                        text = "Orbit",
+                        style = MaterialTheme.typography.displayMedium.copy(
+                            fontFamily = DisplayFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Your personal AI agent on autopilot.",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                    )
+                }
             }
         }
     }

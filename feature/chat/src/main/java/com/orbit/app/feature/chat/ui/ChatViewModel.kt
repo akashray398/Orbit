@@ -14,6 +14,7 @@ import com.orbit.app.core.domain.model.LlmMessage
 import com.orbit.app.core.domain.model.LlmRequest
 import com.orbit.app.core.domain.model.SuggestionChipModel
 import com.orbit.app.core.domain.model.ToolSpec
+import com.orbit.app.core.domain.model.VoiceError
 import com.orbit.app.core.domain.model.VoiceInputEvent
 import com.orbit.app.core.domain.model.VoiceInputState
 import com.orbit.app.core.domain.model.VoiceLocale
@@ -28,8 +29,11 @@ import com.orbit.app.core.domain.usecase.PendingConfirmationSource
 import com.orbit.app.core.domain.usecase.UiConfirmationGate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -65,7 +69,8 @@ data class ChatUiState(
     val llmTestState: LlmTestDialogState = LlmTestDialogState(),
     val showTraceDialog: Boolean = false,
     val traceLogs: List<String> = emptyList(),
-    val pendingConfirmation: PendingConfirmation? = null
+    val pendingConfirmation: PendingConfirmation? = null,
+    val snackbarMessage: String? = null
 )
 
 @HiltViewModel
@@ -158,6 +163,19 @@ class ChatViewModel @Inject constructor(
                             _uiState.update { it.copy(agentState = AgentState.Idle) }
                         }
                     }
+                    is VoiceInputState.Error -> {
+                        _uiState.update { it.copy(agentState = AgentState.Idle) }
+                        val errorMsg = when (state.error) {
+                            is VoiceError.NoSpeech -> "No speech detected. Please try speaking again."
+                            is VoiceError.NoMatch -> "I didn't catch that. Please try again."
+                            is VoiceError.Busy -> "Microphone is busy or in use by another application."
+                            is VoiceError.Network -> "Network issue during speech recognition."
+                            is VoiceError.PermissionDenied -> "Microphone permission required."
+                            is VoiceError.LanguageUnavailable -> "Voice language is unavailable on this device."
+                            else -> "Voice input error. Please try again."
+                        }
+                        showSnackbarNotice(errorMsg)
+                    }
                     else -> {}
                 }
             }
@@ -169,12 +187,15 @@ class ChatViewModel @Inject constructor(
             voiceInputController.events.collect { event ->
                 when (event) {
                     is VoiceInputEvent.FinalResult -> {
-                        if (event.text.isNotBlank()) {
+                        val trimmed = event.text.trim()
+                        if (trimmed.isNotBlank()) {
                             if (_uiState.value.autoSendVoice) {
-                                sendMessage(event.text)
+                                sendMessage(trimmed)
                             } else {
-                                onInputTextChange(event.text)
+                                onInputTextChange(trimmed)
                             }
+                        } else {
+                            showSnackbarNotice("I didn't catch that. Please try speaking again.")
                         }
                     }
                     is VoiceInputEvent.Cancelled -> {
@@ -183,6 +204,14 @@ class ChatViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun showSnackbarNotice(msg: String) {
+        _uiState.update { it.copy(snackbarMessage = msg) }
+    }
+
+    fun clearSnackbarNotice() {
+        _uiState.update { it.copy(snackbarMessage = null) }
     }
 
     fun runLlmTest(withTool: Boolean) {

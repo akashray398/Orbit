@@ -1,5 +1,6 @@
 package com.orbit.app.core.data.network
 
+import android.os.Build
 import com.orbit.app.core.common.network.NetworkMonitor
 import com.orbit.app.core.domain.model.AppError
 import com.orbit.app.core.domain.model.ContentPart
@@ -20,6 +21,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
@@ -34,18 +36,51 @@ class LlmClientImpl @Inject constructor(
 ) : LlmClient {
 
     private val json = Json { ignoreUnknownKeys = true }
-    private val baseUrl = "http://10.0.2.2:5000"
+
+    fun resolveBaseUrl(): String {
+        val isEmulator = Build.FINGERPRINT.startsWith("generic") ||
+                Build.MODEL.contains("google_sdk") ||
+                Build.HARDWARE.contains("goldfish") ||
+                Build.HARDWARE.contains("ranchu")
+        return if (isEmulator) "http://10.0.2.2:5000" else "http://192.168.1.100:5000"
+    }
+
+    private fun checkHealthFast(baseUrl: String): Boolean {
+        val healthClient = httpClient.newBuilder()
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(3, TimeUnit.SECONDS)
+            .build()
+
+        val req = Request.Builder().url("$baseUrl/health").get().build()
+        return try {
+            healthClient.newCall(req).execute().use { it.isSuccessful }
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     override fun stream(request: LlmRequest): Flow<LlmEvent> = callbackFlow {
+        val baseUrl = resolveBaseUrl()
+        Timber.d("[LlmClient] Starting request to $baseUrl")
+
         if (!networkMonitor.isOnline.value) {
+            Timber.w("[LlmClient] Device offline")
             trySend(LlmEvent.Failed(AppError.Network("Device is offline")))
             close()
             return@callbackFlow
         }
 
+        val isHealthy = checkHealthFast(baseUrl)
+        if (!isHealthy) {
+            Timber.w("[LlmClient] Fast health check failed for $baseUrl")
+            trySend(LlmEvent.Failed(AppError.ServerUnavailable("Server at $baseUrl is unreachable")))
+            close()
+            return@callbackFlow
+        }
+
         val streamingClient = httpClient.newBuilder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
             .build()
 
         val token = authTokenProvider.getOrRegisterToken(baseUrl)
@@ -195,6 +230,7 @@ class LlmClientImpl @Inject constructor(
 
             close()
         } catch (e: Exception) {
+            Timber.e(e, "[LlmClient] Stream failure")
             trySend(LlmEvent.Failed(AppError.Network("Network stream error: ${e.message}", e)))
             close()
         }
