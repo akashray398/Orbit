@@ -37,8 +37,9 @@ import com.orbit.app.core.domain.model.AgentState
 import kotlinx.coroutines.delay
 
 /**
- * Stage 2 Splash Screen displaying full brand title, live motion orb,
- * and description tagline before transitioning into the main application.
+ * Unified Single Splash Screen in Deep Dark Navy Theme.
+ * Displays the live floating agent orb, brand title, and tagline description
+ * before transitioning directly into the main application.
  */
 @Composable
 fun OrbitSplashScreen(
@@ -46,7 +47,7 @@ fun OrbitSplashScreen(
     modifier: Modifier = Modifier
 ) {
     val alphaAnim = remember { Animatable(0f) }
-    val offsetYAnim = remember { Animatable(30f) }
+    val offsetYAnim = remember { Animatable(20f) }
     val infiniteTransition = rememberOrbitInfiniteTransition(label = "SplashOrbFloating")
 
     val floatOffsetY by infiniteTransition.animateFloat(
@@ -60,87 +61,90 @@ fun OrbitSplashScreen(
     )
 
     LaunchedEffect(Unit) {
-        alphaAnim.animateTo(1f, animationSpec = tween(800, easing = OrbitMotionTokens.EasingLinear))
-        offsetYAnim.animateTo(0f, animationSpec = tween(800, easing = OrbitMotionTokens.EasingStandard))
+        alphaAnim.animateTo(1f, animationSpec = tween(600, easing = OrbitMotionTokens.EasingLinear))
+        offsetYAnim.animateTo(0f, animationSpec = tween(600, easing = OrbitMotionTokens.EasingStandard))
 
         delay(1800L)
         onSplashComplete()
     }
 
-    OrbitBackground(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .padding(24.dp)
-                    .graphicsLayer {
-                        alpha = alphaAnim.value
-                        translationY = offsetYAnim.value
-                    }
+    // Force Dark Theme for the Splash Screen to prevent any white/bright flash on cold start
+    OrbitTheme(darkTheme = true) {
+        OrbitBackground(modifier = modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                // Live Motion Agent Orb
-                Box(
-                    modifier = Modifier.graphicsLayer {
-                        translationY = floatOffsetY
-                    }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .graphicsLayer {
+                            alpha = alphaAnim.value
+                            translationY = offsetYAnim.value
+                        }
                 ) {
-                    AgentOrb(
-                        state = AgentState.Idle,
-                        size = 140.dp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Orbit Brand Title
-                Text(
-                    text = "ORBIT",
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontFamily = DisplayFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 4.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Personal AI Agent",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 1.sp
-                    ),
-                    color = OrbitTheme.colors.glowSecondary
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                // Glass Description Card
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    // Live Motion Agent Orb
+                    Box(
+                        modifier = Modifier.graphicsLayer {
+                            translationY = floatOffsetY
+                        }
                     ) {
-                        Text(
-                            text = "Your phone on autopilot.",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
+                        AgentOrb(
+                            state = AgentState.Idle,
+                            size = 130.dp
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Manage alarms, reminders, notes, tasks, and notifications hands-free with voice AI commands.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    // Orbit Brand Title
+                    Text(
+                        text = "ORBIT",
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontFamily = DisplayFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 4.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "Personal AI Agent",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.sp
+                        ),
+                        color = OrbitTheme.colors.glowSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Glass Description Card
+                    GlassCard(
+                        modifier = Modifier.fillMaxWidth(0.92f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(18.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Your phone on autopilot.",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Manage alarms, reminders, notes, tasks, and notifications hands-free with voice AI commands.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }

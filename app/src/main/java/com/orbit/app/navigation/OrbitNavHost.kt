@@ -39,13 +39,9 @@ import com.orbit.app.feature.settings.navigation.SettingsRoute
 import com.orbit.app.feature.settings.navigation.settingsScreen
 import com.orbit.app.feature.today.navigation.TodayRoute
 import com.orbit.app.feature.today.navigation.todayScreen
-import com.orbit.app.splash.OrbitIntroScreen
 import com.orbit.app.splash.OrbitSplashScreen
 import com.orbit.app.splash.SplashViewModel
 import kotlinx.serialization.Serializable
-
-@Serializable
-object IntroRoute
 
 @Serializable
 object SplashRoute
@@ -65,7 +61,7 @@ fun OrbitNavHost(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val startDestination = when {
-        ProcessColdStartTracker.isColdStart -> IntroRoute
+        ProcessColdStartTracker.isColdStart -> SplashRoute
         !isOnboardingCompleted -> OnboardingRoute
         else -> ChatRoute
     }
@@ -141,19 +137,6 @@ fun OrbitNavHost(
             startDestination = startDestination,
             modifier = modifier.padding(innerPadding)
         ) {
-            composable<IntroRoute>(
-                enterTransition = { fadeIn() },
-                exitTransition = { fadeOut() }
-            ) {
-                OrbitIntroScreen(
-                    onIntroComplete = {
-                        navController.navigate(SplashRoute) {
-                            popUpTo<IntroRoute> { inclusive = true }
-                        }
-                    }
-                )
-            }
-
             composable<SplashRoute>(
                 enterTransition = { fadeIn() },
                 exitTransition = { fadeOut() }
