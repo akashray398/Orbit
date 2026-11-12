@@ -260,13 +260,16 @@ class RealAgentGateway @Inject constructor(
                 Pair("add_calendar_event", "{\"title\":\"Orbit Event\",\"startAt\":\"2025-11-12T18:00:00\"}")
             }
             lower.contains("status") || lower.contains("battery") -> Pair("get_device_status", "{}")
-            lower.contains("notification") || lower.contains("missed") || lower.contains("miss") || lower.contains("summarise") || lower.contains("summary") -> {
-                Pair("summarize_notifications", "{\"sinceHours\":12}")
+            lower.contains("24") || lower.contains("notification") || lower.contains("missed") || lower.contains("miss") || lower.contains("summarise") || lower.contains("summary") -> {
+                Pair("summarize_notifications", "{\"sinceHours\":24}")
             }
             lower.contains("dnd") || lower.contains("disturb") -> Pair("set_do_not_disturb", "{\"mode\":\"PRIORITY_ONLY\"}")
             lower.contains("call") || lower.contains("phone") || lower.contains("dial") -> {
                 val name = userText.replace(Regex("(?i)call|make a call to|dial"), "").trim().ifEmpty { "Contact" }
                 Pair("make_call", "{\"name\":\"$name\"}")
+            }
+            lower.contains("motivate") || lower.contains("guide") || lower.contains("study") || lower.contains("focus") || lower.contains("coach") || lower.contains("push me") -> {
+                Pair("get_personal_coaching", "{\"focusGoal\":\"Study & Growth\"}")
             }
             lower.contains("maps") -> Pair("open_app", "{\"target\":\"MAPS\"}")
             lower.contains("camera") -> Pair("open_app", "{\"target\":\"CAMERA\"}")

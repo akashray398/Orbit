@@ -16,6 +16,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE status = 'Open' ORDER BY dueAt ASC, priority DESC")
     fun observeOpenTasks(): Flow<List<TaskEntity>>
 
+    @Query("SELECT * FROM tasks WHERE status = 'Open' ORDER BY dueAt ASC, priority DESC")
+    suspend fun getOpenTasks(): List<TaskEntity>
+
     @Query("SELECT * FROM tasks WHERE status = 'Done' ORDER BY completedAt DESC")
     fun observeCompletedTasks(): Flow<List<TaskEntity>>
 

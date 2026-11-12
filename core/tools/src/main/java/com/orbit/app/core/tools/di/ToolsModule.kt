@@ -13,6 +13,7 @@ import com.orbit.app.core.tools.GetUpcomingEventsTool
 import com.orbit.app.core.tools.ListTasksTool
 import com.orbit.app.core.tools.MakeCallTool
 import com.orbit.app.core.tools.OpenAppTool
+import com.orbit.app.core.tools.PersonalCoachTool
 import com.orbit.app.core.tools.ReadNoteTool
 import com.orbit.app.core.tools.SearchNotesTool
 import com.orbit.app.core.tools.SetAlarmTool
@@ -100,4 +101,8 @@ abstract class ToolsModule {
     @Binds
     @IntoSet
     abstract fun bindMakeCallTool(tool: MakeCallTool): Tool
+
+    @Binds
+    @IntoSet
+    abstract fun bindPersonalCoachTool(tool: PersonalCoachTool): Tool
 }
