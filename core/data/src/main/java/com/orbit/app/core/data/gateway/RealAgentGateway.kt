@@ -264,6 +264,10 @@ class RealAgentGateway @Inject constructor(
                 Pair("summarize_notifications", "{\"sinceHours\":12}")
             }
             lower.contains("dnd") || lower.contains("disturb") -> Pair("set_do_not_disturb", "{\"mode\":\"PRIORITY_ONLY\"}")
+            lower.contains("call") || lower.contains("phone") || lower.contains("dial") -> {
+                val name = userText.replace(Regex("(?i)call|make a call to|dial"), "").trim().ifEmpty { "Contact" }
+                Pair("make_call", "{\"name\":\"$name\"}")
+            }
             lower.contains("maps") -> Pair("open_app", "{\"target\":\"MAPS\"}")
             lower.contains("camera") -> Pair("open_app", "{\"target\":\"CAMERA\"}")
             else -> Pair(null, null)

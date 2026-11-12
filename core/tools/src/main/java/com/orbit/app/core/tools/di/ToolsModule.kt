@@ -11,6 +11,7 @@ import com.orbit.app.core.tools.CreateReminderTool
 import com.orbit.app.core.tools.GetDeviceStatusTool
 import com.orbit.app.core.tools.GetUpcomingEventsTool
 import com.orbit.app.core.tools.ListTasksTool
+import com.orbit.app.core.tools.MakeCallTool
 import com.orbit.app.core.tools.OpenAppTool
 import com.orbit.app.core.tools.ReadNoteTool
 import com.orbit.app.core.tools.SearchNotesTool
@@ -95,4 +96,8 @@ abstract class ToolsModule {
     @Binds
     @IntoSet
     abstract fun bindGetUpcomingEventsTool(tool: GetUpcomingEventsTool): Tool
+
+    @Binds
+    @IntoSet
+    abstract fun bindMakeCallTool(tool: MakeCallTool): Tool
 }
