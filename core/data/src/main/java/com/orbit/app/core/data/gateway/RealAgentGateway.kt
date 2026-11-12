@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -324,25 +325,36 @@ class RealAgentGateway @Inject constructor(
     private fun parseHourAndMinute(input: String): Pair<Int, Int> {
         val lower = input.lowercase()
 
-        // Match patterns like "9:30" or "09.30"
-        val timeMatch = Regex("(\\d{1,2})[:.](\\d{2})").find(lower)
-        if (timeMatch != null) {
-            var hour = timeMatch.groupValues[1].toIntOrNull() ?: 6
-            val minute = timeMatch.groupValues[2].toIntOrNull() ?: 0
-            if (lower.contains("pm") && hour in 1..11) hour += 12
-            if (lower.contains("am") && hour == 12) hour = 0
+        // Match time with minutes like "9:30", "11:15", "09.30"
+        val timeWithMinutesMatch = Regex("(\\d{1,2})[:.](\\d{2})").find(lower)
+        if (timeWithMinutesMatch != null) {
+            var hour = timeWithMinutesMatch.groupValues[1].toIntOrNull() ?: 9
+            val minute = timeWithMinutesMatch.groupValues[2].toIntOrNull() ?: 0
+            if ((lower.contains("pm") || lower.contains("p.m")) && hour in 1..11) hour += 12
+            if ((lower.contains("am") || lower.contains("a.m")) && hour == 12) hour = 0
             return Pair(hour.coerceIn(0, 23), minute.coerceIn(0, 59))
         }
 
-        // Match standalone numbers e.g. "9 am", "9pm", "for 9", "at 9"
-        val hourMatch = Regex("(\\d{1,2})\\s*(?:am|pm|o'clock)?").find(lower)
-        if (hourMatch != null) {
-            var hour = hourMatch.groupValues[1].toIntOrNull() ?: 6
-            if (lower.contains("pm") && hour in 1..11) hour += 12
-            if (lower.contains("am") && hour == 12) hour = 0
+        // Match standalone hour numbers e.g. "11 am", "9pm", "for 11", "at 9"
+        val allNumbers = Regex("(\\d{1,2})").findAll(lower).mapNotNull { it.groupValues[1].toIntOrNull() }.toList()
+        val validHourCandidate = allNumbers.firstOrNull { it in 1..24 }
+
+        if (validHourCandidate != null) {
+            var hour = validHourCandidate
+            val isPm = lower.contains("pm") || lower.contains("p.m") || lower.contains("night") || lower.contains("evening")
+            val isAm = lower.contains("am") || lower.contains("a.m") || lower.contains("morning")
+
+            if (isPm && hour in 1..11) {
+                hour += 12
+            } else if (isAm && hour == 12) {
+                hour = 0
+            }
             return Pair(hour.coerceIn(0, 23), 0)
         }
 
-        return Pair(6, 0)
+        // Fallback to next upcoming hour
+        val cal = Calendar.getInstance()
+        val nextHour = (cal.get(Calendar.HOUR_OF_DAY) + 1) % 24
+        return Pair(nextHour, 0)
     }
 }
