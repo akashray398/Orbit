@@ -47,8 +47,8 @@ class LlmClientImpl @Inject constructor(
 
     private fun checkHealthFast(baseUrl: String): Boolean {
         val healthClient = httpClient.newBuilder()
-            .connectTimeout(3, TimeUnit.SECONDS)
-            .readTimeout(3, TimeUnit.SECONDS)
+            .connectTimeout(1, TimeUnit.SECONDS)
+            .readTimeout(1, TimeUnit.SECONDS)
             .build()
 
         val req = Request.Builder().url("$baseUrl/health").get().build()
@@ -79,8 +79,8 @@ class LlmClientImpl @Inject constructor(
         }
 
         val streamingClient = httpClient.newBuilder()
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
             .build()
 
         val token = authTokenProvider.getOrRegisterToken(baseUrl)
