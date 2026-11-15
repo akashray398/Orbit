@@ -35,7 +35,7 @@ class VoiceSettingsRepositoryImpl @Inject constructor(
     }
 
     override val spokenRepliesEnabled: Flow<Boolean> = context.voiceDataStore.data.map { prefs ->
-        prefs[Keys.SPOKEN_REPLIES] ?: false
+        prefs[Keys.SPOKEN_REPLIES] ?: true // Default to true so voice audio plays out loud
     }
 
     override val autoSendVoice: Flow<Boolean> = context.voiceDataStore.data.map { prefs ->

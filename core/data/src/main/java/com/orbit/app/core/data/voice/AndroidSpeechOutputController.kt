@@ -30,6 +30,9 @@ class AndroidSpeechOutputController @Inject constructor(
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var focusRequest: AudioFocusRequest? = null
 
+    private var pendingSpeakText: String? = null
+    private var pendingLocale: VoiceLocale? = null
+
     init {
         tts = TextToSpeech(context, this)
     }
@@ -53,14 +56,26 @@ class AndroidSpeechOutputController @Inject constructor(
                     abandonAudioFocus()
                 }
             })
+
+            val text = pendingSpeakText
+            val loc = pendingLocale
+            if (text != null && loc != null) {
+                pendingSpeakText = null
+                pendingLocale = null
+                speak(text, loc)
+            }
         }
     }
 
     override fun speak(text: String, locale: VoiceLocale) {
-        if (!isInitialized || tts == null) return
-
         val cleanText = stripMarkdown(text)
         if (cleanText.isEmpty()) return
+
+        if (!isInitialized || tts == null) {
+            pendingSpeakText = cleanText
+            pendingLocale = locale
+            return
+        }
 
         requestAudioFocus()
         val javaLocale = Locale.forLanguageTag(locale.bcp47Tag)
@@ -72,6 +87,8 @@ class AndroidSpeechOutputController @Inject constructor(
 
     override fun stop() {
         tts?.stop()
+        pendingSpeakText = null
+        pendingLocale = null
         _isSpeaking.value = false
         abandonAudioFocus()
     }

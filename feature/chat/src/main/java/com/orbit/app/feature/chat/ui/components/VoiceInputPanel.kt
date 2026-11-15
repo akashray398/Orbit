@@ -7,11 +7,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -77,131 +79,146 @@ fun VoiceInputPanel(
         }
     }
 
-    Column(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .background(colors.glassFill)
-            .padding(20.dp)
+            .fillMaxSize()
+            .background(colors.auroraGradient)
+            .padding(24.dp)
             .navigationBarsPadding()
             .imePadding(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        contentAlignment = Alignment.Center
     ) {
-        // Top Row: Language Chip & Cancel Button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            OrbitChip(
-                label = currentLocale.displayName,
-                selected = true,
-                onClick = onLanguageClick
-            )
-
-            Box(
+            // Top Header: Close Chat & Language Pill
+            Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0x33FFFFFF))
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = String.format("%02d:%02d / 01:00", elapsedTimeSeconds / 60, elapsedTimeSeconds % 60),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                OrbitChip(
+                    label = currentLocale.displayName,
+                    selected = true,
+                    onClick = onLanguageClick
                 )
-            }
 
-            IconButton(onClick = onCancelClick) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel Voice Input",
-                    tint = OrbitTheme.colors.danger
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Centerpiece glowing orb
-        AgentOrb(
-            state = AgentState.Listening,
-            amplitude = amplitude,
-            size = 140.dp
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "Orbit is listening...",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Live Waveform
-        WaveformView(
-            amplitude = if (isSlideToCancel) 0f else amplitude,
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .height(40.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Live Transcript Display
-        AnimatedContent(
-            targetState = isSlideToCancel,
-            transitionSpec = { fadeIn(tween(OrbitMotionTokens.DurationFast)) togetherWith fadeOut(tween(OrbitMotionTokens.DurationFast)) },
-            label = "transcriptAnimation"
-        ) { cancelState ->
-            if (cancelState) {
-                Text(
-                    text = "Release to cancel",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = OrbitTheme.colors.danger
-                )
-            } else {
-                Text(
-                    text = if (partialText.isNotEmpty()) partialText else "Speak your prompt or goal...",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
+                // Mockup style "✕ Close chat" pill
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .semantics { contentDescription = "Live transcript: $partialText" }
-                )
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0x33FFFFFF))
+                        .clickable { onCancelClick() }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close chat",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Close chat",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Concentric Glowing Mic Stop Button
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(Color(0x22FF5500))
-                .border(width = 1.dp, color = Color(0x66FF5500), shape = CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            IconButton(
-                onClick = onStopClick,
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(colors.primaryGradient)
-                    .semantics { contentDescription = "Done speaking" }
+            // Centerpiece: Glowing 3D Metallic Amber Planet Sphere (170dp size matching mockup)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Mic,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                AgentOrb(
+                    state = AgentState.Listening,
+                    amplitude = amplitude,
+                    size = 170.dp
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Orbit is listening...",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Large Bold Prompt Transcript Display Text
+                AnimatedContent(
+                    targetState = isSlideToCancel,
+                    transitionSpec = { fadeIn(tween(OrbitMotionTokens.DurationFast)) togetherWith fadeOut(tween(OrbitMotionTokens.DurationFast)) },
+                    label = "transcriptAnimation"
+                ) { cancelState ->
+                    if (cancelState) {
+                        Text(
+                            text = "Release to cancel",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = OrbitTheme.colors.danger
+                        )
+                    } else {
+                        Text(
+                            text = if (partialText.isNotEmpty()) partialText else "Deploy an autonomous AI agent to monitor your phone tasks.",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp,
+                                lineHeight = 30.sp,
+                                textAlign = TextAlign.Center
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .semantics { contentDescription = "Live transcript: $partialText" }
+                        )
+                    }
+                }
+            }
+
+            // Bottom Mic Controls (Mockup Concentric Orange Mic Button)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                WaveformView(
+                    amplitude = if (isSlideToCancel) 0f else amplitude,
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(36.dp)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(76.dp)
+                        .clip(CircleShape)
+                        .background(Color(0x22FF5500))
+                        .border(width = 1.dp, color = Color(0x66FF5500), shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(
+                        onClick = onStopClick,
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(CircleShape)
+                            .background(colors.primaryGradient)
+                            .semantics { contentDescription = "Done speaking" }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
             }
         }
     }

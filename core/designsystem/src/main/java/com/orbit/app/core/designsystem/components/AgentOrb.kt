@@ -36,9 +36,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * AgentOrb - Central AI Agent visual identity component.
- * Dynamically reacts to AgentState (Idle, Listening, Thinking, Acting, Error)
- * with single-pass Canvas rendering, zero per-frame allocations, and reducedMotion fallback.
+ * AgentOrb - 3D Metallic Amber Planet Sphere matching the exact mockup design.
+ * Rendered with 3D spherical lighting, specular highlights, and state-driven liquid motion.
  */
 @Composable
 fun AgentOrb(
@@ -51,20 +50,12 @@ fun AgentOrb(
     val reducedMotion = LocalOrbitMotion.current.reducedMotion
     val themeColors = OrbitTheme.colors
 
-    // Target colors for state morphing
+    // Target glow color based on state
     val targetPrimaryColor = when (state) {
-        is AgentState.Idle -> themeColors.glowPrimary
-        is AgentState.Listening -> MaterialTheme.colorScheme.primary
-        is AgentState.Thinking -> themeColors.glowSecondary
-        is AgentState.Acting -> themeColors.glowSecondary
-        is AgentState.Error -> themeColors.danger
-    }
-
-    val targetCoreColorStart = when (state) {
-        is AgentState.Idle -> themeColors.glowPrimary
-        is AgentState.Listening -> MaterialTheme.colorScheme.primary
-        is AgentState.Thinking -> themeColors.glowSecondary
-        is AgentState.Acting -> themeColors.glowSecondary
+        is AgentState.Idle -> Color(0xFFFF5500)
+        is AgentState.Listening -> Color(0xFFFF8800)
+        is AgentState.Thinking -> Color(0xFFFFBB00)
+        is AgentState.Acting -> Color(0xFFFF8800)
         is AgentState.Error -> themeColors.danger
     }
 
@@ -74,26 +65,13 @@ fun AgentOrb(
         label = "orbPrimaryColor"
     )
 
-    val coreColorStart by animateColorAsState(
-        targetValue = targetCoreColorStart,
-        animationSpec = OrbitMotionTokens.gentle(),
-        label = "orbCoreColorStart"
-    )
-
-    // Animation clocks
     val infiniteTransition = rememberOrbitInfiniteTransition("AgentOrbAnimation")
-
-    val orbitSpeedMs = when (state) {
-        is AgentState.Thinking -> 1200
-        is AgentState.Acting -> 800
-        else -> 4000
-    }
 
     val orbitAngle by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-            animation = tween(if (reducedMotion) 0 else orbitSpeedMs, easing = OrbitMotionTokens.EasingLinear),
+            animation = tween(if (reducedMotion) 0 else 3000, easing = OrbitMotionTokens.EasingLinear),
             repeatMode = androidx.compose.animation.core.RepeatMode.Restart
         ),
         label = "orbOrbitAngle"
@@ -101,7 +79,7 @@ fun AgentOrb(
 
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (reducedMotion) 1f else 1.15f,
+        targetValue = if (reducedMotion) 1f else 1.08f,
         animationSpec = androidx.compose.animation.core.infiniteRepeatable(
             animation = tween(OrbitMotionTokens.DurationSlow, easing = OrbitMotionTokens.EasingStandard),
             repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
@@ -123,90 +101,74 @@ fun AgentOrb(
     ) {
         Canvas(modifier = Modifier.size(size)) {
             val center = Offset(this.size.width / 2f, this.size.height / 2f)
-            val baseRadius = (this.size.width / 2f) * 0.45f
+            val baseRadius = (this.size.width / 2f) * 0.48f
             val activeRadius = baseRadius * pulseScale * currentAmplitudeScale
 
-            // Reduced Motion Fallback
-            if (reducedMotion) {
-                drawCircle(color = primaryColor.copy(alpha = 0.2f), radius = baseRadius * 1.3f, center = center)
-                drawCircle(color = primaryColor, radius = baseRadius, center = center)
-                return@Canvas
-            }
-
-            // 1. Draw Background Glow
-            val glowRadius = activeRadius * 1.6f
+            // 1. Soft Ambient Outer Glow Aura
             drawCircle(
-                color = primaryColor.copy(alpha = 0.25f),
-                radius = glowRadius,
+                brush = Brush.radialGradient(
+                    colors = listOf(primaryColor.copy(alpha = 0.4f), primaryColor.copy(alpha = 0.1f), Color.Transparent),
+                    center = center,
+                    radius = activeRadius * 1.7f
+                ),
+                radius = activeRadius * 1.7f,
                 center = center
             )
 
-            // 2. Draw Listening Ripple Rings
+            // 2. Listening Ripple Ring
             if (state is AgentState.Listening) {
-                val rippleRadius = activeRadius * (1.2f + amplitude * 0.4f)
+                val rippleRadius = activeRadius * (1.15f + amplitude * 0.3f)
                 drawCircle(
-                    color = primaryColor.copy(alpha = 0.4f),
+                    color = primaryColor.copy(alpha = 0.5f),
                     radius = rippleRadius,
                     center = center,
                     style = Stroke(width = 2.dp.toPx())
                 )
             }
 
-            // 3. Draw Core Sphere Gradient
-            val coreBrush = Brush.radialGradient(
-                colors = listOf(coreColorStart, primaryColor.copy(alpha = 0.7f), Color.Transparent),
-                center = center,
-                radius = activeRadius * 1.2f
+            // 3. 3D Metallic Planet Sphere Body (Top-Left Light Specular Highlight)
+            val lightSourceOffset = Offset(center.x - activeRadius * 0.35f, center.y - activeRadius * 0.35f)
+            val sphereBrush = Brush.radialGradient(
+                colors = listOf(
+                    Color(0xFFFFDD88), // Specular light highlight point
+                    primaryColor,       // Mid-body Flame Amber
+                    Color(0xFFC83200),
+                    Color(0xFF4A1002), // Dark shaded shadow edge
+                    Color(0xFF180300)
+                ),
+                center = lightSourceOffset,
+                radius = activeRadius * 1.35f
             )
-            drawCircle(brush = coreBrush, radius = activeRadius, center = center)
 
-            // 4. Draw Acting / Thinking Rotating Ring Arc
+            drawCircle(brush = sphereBrush, radius = activeRadius, center = center)
+
+            // 4. Subtle Specular Shine Edge
+            val specularOffset = Offset(center.x - activeRadius * 0.28f, center.y - activeRadius * 0.28f)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color.White.copy(alpha = 0.65f), Color.Transparent),
+                    center = specularOffset,
+                    radius = activeRadius * 0.45f
+                ),
+                radius = activeRadius * 0.45f,
+                center = specularOffset
+            )
+
+            // 5. Acting / Thinking Orbit Ring Arc
             if (state is AgentState.Thinking || state is AgentState.Acting) {
                 rotate(degrees = orbitAngle, pivot = center) {
                     drawArc(
                         brush = Brush.sweepGradient(
-                            listOf(primaryColor, Color.Transparent, primaryColor)
+                            listOf(primaryColor, Color.Transparent, Color.White, primaryColor)
                         ),
                         startAngle = 0f,
-                        sweepAngle = 240f,
+                        sweepAngle = 220f,
                         useCenter = false,
-                        topLeft = Offset(center.x - activeRadius * 1.3f, center.y - activeRadius * 1.3f),
-                        size = Size(activeRadius * 2.6f, activeRadius * 2.6f),
-                        style = Stroke(width = 3.dp.toPx())
+                        topLeft = Offset(center.x - activeRadius * 1.25f, center.y - activeRadius * 1.25f),
+                        size = Size(activeRadius * 2.5f, activeRadius * 2.5f),
+                        style = Stroke(width = 2.5.dp.toPx())
                     )
                 }
-            }
-
-            // 5. Draw Satellite Dot along Orbit Path
-            val rx = activeRadius * 1.35f
-            val ry = activeRadius * 0.75f
-            val rad = Math.toRadians((orbitAngle - 25).toDouble())
-            val satX = center.x + rx * cos(rad).toFloat()
-            val satY = center.y + ry * sin(rad).toFloat()
-
-            drawCircle(
-                color = themeColors.glowSecondary,
-                radius = 3.5.dp.toPx(),
-                center = Offset(satX, satY)
-            )
-        }
-
-        // Reduced Motion Mode Icon Overlay
-        if (reducedMotion) {
-            val icon = when (state) {
-                is AgentState.Listening -> Icons.Default.Mic
-                is AgentState.Thinking -> Icons.Default.Psychology
-                is AgentState.Acting -> Icons.Default.Build
-                is AgentState.Error -> Icons.Default.Warning
-                else -> null
-            }
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(size * 0.35f)
-                )
             }
         }
     }
