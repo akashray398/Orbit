@@ -6,7 +6,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,9 +18,12 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,11 +40,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.orbit.app.core.designsystem.components.AgentOrb
 import com.orbit.app.core.designsystem.components.OrbitChip
 import com.orbit.app.core.designsystem.components.WaveformView
 import com.orbit.app.core.designsystem.motion.OrbitMotionTokens
 import com.orbit.app.core.designsystem.theme.OrbitTheme
+import com.orbit.app.core.domain.model.AgentState
 import com.orbit.app.core.domain.model.VoiceLocale
 import kotlinx.coroutines.delay
 
@@ -57,7 +67,6 @@ fun VoiceInputPanel(
     val colors = OrbitTheme.colors
     var elapsedTimeSeconds by remember { mutableIntStateOf(0) }
 
-    // Timer limit 60 seconds
     LaunchedEffect(Unit) {
         while (elapsedTimeSeconds < 60) {
             delay(1000L)
@@ -72,11 +81,12 @@ fun VoiceInputPanel(
         modifier = modifier
             .fillMaxWidth()
             .background(colors.glassFill)
-            .padding(16.dp)
+            .padding(20.dp)
             .navigationBarsPadding()
             .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Top Row: Language Chip & Cancel Button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -88,11 +98,18 @@ fun VoiceInputPanel(
                 onClick = onLanguageClick
             )
 
-            Text(
-                text = String.format("%02d:%02d / 01:00", elapsedTimeSeconds / 60, elapsedTimeSeconds % 60),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0x33FFFFFF))
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = String.format("%02d:%02d / 01:00", elapsedTimeSeconds / 60, elapsedTimeSeconds % 60),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
             IconButton(onClick = onCancelClick) {
                 Icon(
@@ -103,19 +120,36 @@ fun VoiceInputPanel(
             }
         }
 
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Centerpiece glowing orb
+        AgentOrb(
+            state = AgentState.Listening,
+            amplitude = amplitude,
+            size = 140.dp
+        )
+
         Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Orbit is listening...",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Live Waveform
         WaveformView(
             amplitude = if (isSlideToCancel) 0f else amplitude,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
+                .fillMaxWidth(0.8f)
+                .height(40.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Partial Transcript / Status Text
+        // Live Transcript Display
         AnimatedContent(
             targetState = isSlideToCancel,
             transitionSpec = { fadeIn(tween(OrbitMotionTokens.DurationFast)) togetherWith fadeOut(tween(OrbitMotionTokens.DurationFast)) },
@@ -129,39 +163,46 @@ fun VoiceInputPanel(
                 )
             } else {
                 Text(
-                    text = if (partialText.isNotEmpty()) partialText else "Listening...",
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = if (partialText.isNotEmpty()) partialText else "Speak your prompt or goal...",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center
+                    ),
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Live transcript: $partialText"
-                    }
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .semantics { contentDescription = "Live transcript: $partialText" }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        val btnBgModifier = if (isSlideToCancel) {
-            Modifier.background(colors.danger)
-        } else {
-            Modifier.background(colors.primaryGradient)
-        }
-
-        // Stop / Send Action Button
-        IconButton(
-            onClick = onStopClick,
+        // Concentric Glowing Mic Stop Button
+        Box(
             modifier = Modifier
-                .size(56.dp)
-                .clip(OrbitTheme.shapes.medium)
-                .then(btnBgModifier)
-                .semantics { contentDescription = "Done speaking" }
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(Color(0x22FF5500))
+                .border(width = 1.dp, color = Color(0x66FF5500), shape = CircleShape),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Stop,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(28.dp)
-            )
+            IconButton(
+                onClick = onStopClick,
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(CircleShape)
+                    .background(colors.primaryGradient)
+                    .semantics { contentDescription = "Done speaking" }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
 }

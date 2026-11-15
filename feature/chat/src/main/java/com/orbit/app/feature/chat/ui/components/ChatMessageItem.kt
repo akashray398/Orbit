@@ -3,6 +3,11 @@ package com.orbit.app.feature.chat.ui.components
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -27,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -50,6 +57,8 @@ import androidx.compose.ui.unit.dp
 import com.orbit.app.core.designsystem.components.AgentOrb
 import com.orbit.app.core.designsystem.components.GlassCard
 import com.orbit.app.core.designsystem.components.OrbitChip
+import com.orbit.app.core.designsystem.motion.OrbitMotionTokens
+import com.orbit.app.core.designsystem.motion.rememberOrbitInfiniteTransition
 import com.orbit.app.core.designsystem.theme.OrbitTheme
 import com.orbit.app.core.domain.model.AgentState
 import com.orbit.app.core.domain.model.ChatMessage
@@ -68,6 +77,27 @@ fun ChatMessageItem(
     val haptic = LocalHapticFeedback.current
     var showMenu by remember { mutableStateOf(false) }
 
+    // Entrance Animation (scale & fade)
+    val entranceAlpha = remember { Animatable(0.4f) }
+    val entranceScale = remember { Animatable(0.96f) }
+
+    LaunchedEffect(message.id) {
+        entranceAlpha.animateTo(1f, animationSpec = tween(OrbitMotionTokens.DurationFast))
+        entranceScale.animateTo(1f, animationSpec = OrbitMotionTokens.bouncy())
+    }
+
+    // Pulsing Streaming Cursor Animation
+    val infiniteTransition = rememberOrbitInfiniteTransition(label = "StreamingCursorTransition")
+    val cursorAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500, easing = OrbitMotionTokens.EasingLinear),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
+
     val accessibilitySender = when (message.role) {
         ChatMessageRole.User -> "You said: "
         ChatMessageRole.Agent -> "Orbit Agent replied: "
@@ -78,6 +108,11 @@ fun ChatMessageItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp, horizontal = 12.dp)
+            .graphicsLayer {
+                alpha = entranceAlpha.value
+                scaleX = entranceScale.value
+                scaleY = entranceScale.value
+            }
             .semantics {
                 contentDescription = "$accessibilitySender ${message.content}"
             }
@@ -175,16 +210,9 @@ fun ChatMessageItem(
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
 
-                                val annotatedText = renderMarkdownLight(message.content)
+                                val annotatedText = renderMarkdownLight(message.content, cursorAlpha, message.status == ChatMessageStatus.Streaming)
                                 Text(
-                                    text = if (message.status == ChatMessageStatus.Streaming) {
-                                        buildAnnotatedString {
-                                            append(annotatedText)
-                                            append(" ▌")
-                                        }
-                                    } else {
-                                        annotatedText
-                                    },
+                                    text = annotatedText,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -256,9 +284,10 @@ private fun copyToClipboard(context: Context, text: String) {
 }
 
 /**
- * Basic Markdown-Light renderer supporting bold (**text**), inline code (`code`), and bullet lists (- item).
+ * Basic Markdown-Light renderer supporting bold (**text**), inline code (`code`), bullet lists (- item),
+ * and live animated glowing streaming cursor.
  */
-private fun renderMarkdownLight(input: String): AnnotatedString {
+private fun renderMarkdownLight(input: String, cursorAlpha: Float, isStreaming: Boolean): AnnotatedString {
     return buildAnnotatedString {
         val lines = input.split("\n")
         lines.forEachIndexed { index, line ->
@@ -268,18 +297,17 @@ private fun renderMarkdownLight(input: String): AnnotatedString {
                 currentLine = currentLine.trimStart().substring(2)
             }
 
-            // Render inline bold & code tokens
             val parts = currentLine.split("**")
             for (i in parts.indices) {
                 if (i % 2 == 1) {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFFFF5500))) {
                         append(parts[i])
                     }
                 } else {
                     val codeParts = parts[i].split("`")
                     for (j in codeParts.indices) {
                         if (j % 2 == 1) {
-                            withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = Color(0x337C5CFF))) {
+                            withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = Color(0x33FF5500))) {
                                 append(codeParts[j])
                             }
                         } else {
@@ -291,6 +319,12 @@ private fun renderMarkdownLight(input: String): AnnotatedString {
 
             if (index < lines.size - 1) {
                 append("\n")
+            }
+        }
+
+        if (isStreaming) {
+            withStyle(SpanStyle(color = Color(0xFFFF8800).copy(alpha = cursorAlpha), fontWeight = FontWeight.Bold)) {
+                append(" ▌")
             }
         }
     }
