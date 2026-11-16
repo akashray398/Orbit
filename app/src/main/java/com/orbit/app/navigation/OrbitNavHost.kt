@@ -8,7 +8,6 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -26,7 +25,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.orbit.app.core.designsystem.theme.OrbitTheme
 import com.orbit.app.feature.activity.navigation.ActivityRoute
 import com.orbit.app.feature.activity.navigation.activityScreen
 import com.orbit.app.feature.chat.navigation.ChatRoute
@@ -79,14 +77,14 @@ fun OrbitNavHost(
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
-                    containerColor = Color(0xEE070B1A)
+                    containerColor = Color(0xF2120805)
                 ) {
                     val navItemColors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = OrbitTheme.colors.glowSecondary,
-                        selectedTextColor = OrbitTheme.colors.glowSecondary,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        indicatorColor = Color(0x337C5CFF)
+                        selectedIconColor = Color(0xFFFF8800),
+                        selectedTextColor = Color(0xFFFF8800),
+                        unselectedIconColor = Color(0xFFA89F9B),
+                        unselectedTextColor = Color(0xFFA89F9B),
+                        indicatorColor = Color(0x33FF5500)
                     )
 
                     NavigationBarItem(

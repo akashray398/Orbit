@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Mic
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.orbit.app.core.designsystem.components.GlassCard
 import com.orbit.app.core.designsystem.components.OrbitTextField
 import com.orbit.app.core.designsystem.motion.OrbitMotionTokens
 import com.orbit.app.core.designsystem.motion.rememberOrbitInfiniteTransition
@@ -51,49 +53,63 @@ fun ChatInputBar(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    val colors = OrbitTheme.colors
+    BoxPillContainer(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onMicClick,
+                modifier = Modifier.semantics { contentDescription = "Voice Input" }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
-    Row(
+            Spacer(modifier = Modifier.width(4.dp))
+
+            OrbitTextField(
+                value = value,
+                onValueChange = onValueChange,
+                placeholder = "Ask Orbit anything...",
+                enabled = enabled && !isStreaming,
+                singleLine = false,
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            StylishActionButton(
+                isStreaming = isStreaming,
+                hasInputText = value.trim().isNotEmpty(),
+                enabled = enabled,
+                onSendClick = onSendClick,
+                onStopClick = onStopClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxPillContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    GlassCard(
         modifier = modifier
             .fillMaxWidth()
-            .background(colors.glassFill)
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .navigationBarsPadding()
             .imePadding(),
-        verticalAlignment = Alignment.CenterVertically
+        shape = RoundedCornerShape(32.dp)
     ) {
-        IconButton(
-            onClick = onMicClick,
-            modifier = Modifier.semantics { contentDescription = "Voice Input" }
-        ) {
-            Icon(
-                imageVector = Icons.Default.Mic,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(26.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(4.dp))
-
-        OrbitTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = "Ask Orbit anything...",
-            enabled = enabled && !isStreaming,
-            singleLine = false,
-            modifier = Modifier.weight(1f)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        StylishActionButton(
-            isStreaming = isStreaming,
-            hasInputText = value.trim().isNotEmpty(),
-            enabled = enabled,
-            onSendClick = onSendClick,
-            onStopClick = onStopClick
-        )
+        content()
     }
 }
 
@@ -137,7 +153,7 @@ private fun StylishActionButton(
         },
         enabled = isClickable,
         modifier = Modifier
-            .size(48.dp)
+            .size(44.dp)
             .shadow(
                 elevation = shadowElevation,
                 shape = CircleShape,
@@ -160,14 +176,14 @@ private fun StylishActionButton(
                     imageVector = Icons.Default.Stop,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             } else {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = null,
                     tint = if (hasInputText) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

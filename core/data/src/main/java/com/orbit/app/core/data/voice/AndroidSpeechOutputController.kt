@@ -79,7 +79,12 @@ class AndroidSpeechOutputController @Inject constructor(
 
         requestAudioFocus()
         val javaLocale = Locale.forLanguageTag(locale.bcp47Tag)
-        tts?.language = javaLocale
+        val setRes = tts?.setLanguage(javaLocale)
+
+        // Fallback to US English if requested locale language pack is missing
+        if (setRes == TextToSpeech.LANG_MISSING_DATA || setRes == TextToSpeech.LANG_NOT_SUPPORTED) {
+            tts?.language = Locale.US
+        }
 
         val utteranceId = "orbit_tts_${System.currentTimeMillis()}"
         tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
@@ -109,7 +114,7 @@ class AndroidSpeechOutputController @Inject constructor(
     private fun requestAudioFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val playbackAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANT)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
 

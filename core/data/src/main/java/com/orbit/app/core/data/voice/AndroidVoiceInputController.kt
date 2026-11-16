@@ -2,7 +2,6 @@ package com.orbit.app.core.data.voice
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -32,7 +31,7 @@ class AndroidVoiceInputController @Inject constructor(
     private val _state = MutableStateFlow<VoiceInputState>(VoiceInputState.Idle)
     override val state: StateFlow<VoiceInputState> = _state.asStateFlow()
 
-    private val _events = MutableSharedFlow<VoiceInputEvent>()
+    private val _events = MutableSharedFlow<VoiceInputEvent>(extraBufferCapacity = 64)
     override val events: Flow<VoiceInputEvent> = _events.asSharedFlow()
 
     private var speechRecognizer: SpeechRecognizer? = null
@@ -51,14 +50,7 @@ class AndroidVoiceInputController @Inject constructor(
                 cancel()
             }
 
-            val recognizer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
-            ) {
-                SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
-            } else {
-                SpeechRecognizer.createSpeechRecognizer(context)
-            }
-
+            val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
             speechRecognizer = recognizer
 
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -117,12 +109,11 @@ class AndroidVoiceInputController @Inject constructor(
             override fun onBeginningOfSpeech() {}
 
             override fun onRmsChanged(rmsdB: Float) {
-                // Normalize dB (-2 .. 10) to 0.0 .. 1.0 with smoothing
                 val raw = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
                 currentAmplitude = if (raw > currentAmplitude) {
-                    raw // Fast attack
+                    raw
                 } else {
-                    currentAmplitude * 0.7f + raw * 0.3f // Slow decay
+                    currentAmplitude * 0.7f + raw * 0.3f
                 }
                 val currentPartial = (_state.value as? VoiceInputState.Listening)?.partialText ?: ""
                 _state.value = VoiceInputState.Listening(currentAmplitude, currentPartial)
@@ -156,8 +147,8 @@ class AndroidVoiceInputController @Inject constructor(
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val text = matches?.firstOrNull() ?: ""
-                _state.value = VoiceInputState.Idle
                 _events.tryEmit(VoiceInputEvent.FinalResult(text))
+                _state.value = VoiceInputState.Idle
             }
 
             override fun onPartialResults(partialResults: Bundle?) {

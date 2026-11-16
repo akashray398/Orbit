@@ -1,5 +1,9 @@
 package com.orbit.app.feature.chat.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
@@ -22,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -55,11 +60,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.orbit.app.core.designsystem.components.AgentOrb
+import com.orbit.app.core.designsystem.components.GlassCard
 import com.orbit.app.core.designsystem.components.OrbitBackground
 import com.orbit.app.core.designsystem.components.OrbitChip
 import com.orbit.app.core.designsystem.components.OrbitLogo
@@ -91,10 +101,34 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val view = LocalView.current
 
     var showMenu by remember { mutableStateOf(false) }
     var showLanguageSheet by remember { mutableStateOf(false) }
+
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.startVoiceInput()
+        } else {
+            viewModel.showSnackbarNotice("Microphone permission is required for voice input.")
+        }
+    }
+
+    fun handleMicClick() {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            viewModel.startVoiceInput()
+        } else {
+            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
 
     val isEmpty = uiState.messages.isEmpty()
     val isVoiceActive = voiceInputState is VoiceInputState.Listening || voiceInputState is VoiceInputState.Preparing
@@ -194,256 +228,267 @@ fun ChatScreen(
     }
 
     OrbitBackground(modifier = modifier) {
-        Scaffold(
-            containerColor = Color.Transparent,
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            topBar = {
-                Column {
-                    if (!uiState.isOnline) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(OrbitTheme.colors.warning)
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Warning, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Black)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Offline Mode - Agent responses limited", style = MaterialTheme.typography.labelSmall, color = Color.Black)
-                        }
-                    }
-
-                    TopAppBar(
-                        title = {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                containerColor = Color.Transparent,
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                topBar = {
+                    Column {
+                        if (!uiState.isOnline) {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.clickable {
-                                    if (isSpeaking) viewModel.stopSpeaking()
-                                }
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(OrbitTheme.colors.warning)
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                if (!isEmpty) {
-                                    AgentOrb(
-                                        state = uiState.agentState,
-                                        amplitude = voiceAmplitude,
-                                        size = orbSize
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                } else {
-                                    OrbitLogo(size = 28.dp, mode = OrbitLogoMode.Mark)
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                Icon(Icons.Default.Warning, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Black)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Offline Mode - Agent responses limited", style = MaterialTheme.typography.labelSmall, color = Color.Black)
+                            }
+                        }
+
+                        TopAppBar(
+                            title = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable {
+                                        if (isSpeaking) viewModel.stopSpeaking()
+                                    }
+                                ) {
+                                    if (!isEmpty) {
+                                        AgentOrb(
+                                            state = uiState.agentState,
+                                            amplitude = voiceAmplitude,
+                                            size = orbSize
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                    } else {
+                                        OrbitLogo(size = 28.dp, mode = OrbitLogoMode.Mark)
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                    }
+                                    Column {
+                                        Text("Orbit", style = MaterialTheme.typography.titleLarge)
+                                        Text(
+                                            text = statusText,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
-                                Column {
-                                    Text("Orbit", style = MaterialTheme.typography.titleLarge)
-                                    Text(
-                                        text = statusText,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            actions = {
+                                IconButton(onClick = viewModel::toggleSpokenReplies) {
+                                    Icon(
+                                        imageVector = if (uiState.spokenRepliesEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                                        contentDescription = if (uiState.spokenRepliesEnabled) "Disable spoken replies" else "Enable spoken replies",
+                                        tint = if (uiState.spokenRepliesEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = viewModel::toggleSpokenReplies) {
-                                Icon(
-                                    imageVector = if (uiState.spokenRepliesEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                                    contentDescription = if (uiState.spokenRepliesEnabled) "Disable spoken replies" else "Enable spoken replies",
-                                    tint = if (uiState.spokenRepliesEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(onClick = { showMenu = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "Options Menu")
-                            }
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Debug: Agent Trace") },
-                                    onClick = {
-                                        showMenu = false
-                                        viewModel.openAgentTrace()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Debug: Test LLM Stream") },
-                                    onClick = {
-                                        showMenu = false
-                                        viewModel.runLlmTest(withTool = false)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Debug: Test LLM Tool Call") },
-                                    onClick = {
-                                        showMenu = false
-                                        viewModel.runLlmTest(withTool = true)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Voice & Speech Settings") },
-                                    onClick = {
-                                        showMenu = false
-                                        showLanguageSheet = true
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Clear Conversation") },
-                                    onClick = {
-                                        viewModel.clearConversation()
-                                        showMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Add 300 Sample Messages") },
-                                    onClick = {
-                                        viewModel.addSampleMessages(300)
-                                        showMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Settings") },
-                                    onClick = {
-                                        showMenu = false
-                                        onSettingsClick()
-                                    }
-                                )
-                            }
-                        },
-                        windowInsets = WindowInsets(0, 0, 0, 0),
-                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-                    )
-                }
-            },
-            bottomBar = {
-                if (isVoiceActive) {
-                    VoiceInputPanel(
-                        amplitude = voiceAmplitude,
-                        partialText = voicePartialText,
-                        currentLocale = uiState.voiceLocale,
-                        isSlideToCancel = false,
-                        onCancelClick = viewModel::cancelVoiceInput,
-                        onStopClick = viewModel::stopVoiceInput,
-                        onLanguageClick = { showLanguageSheet = true }
-                    )
-                } else {
+                                IconButton(onClick = { showMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Options Menu")
+                                }
+                                DropdownMenu(
+                                    expanded = showMenu,
+                                    onDismissRequest = { showMenu = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Debug: Agent Trace") },
+                                        onClick = {
+                                            showMenu = false
+                                            viewModel.openAgentTrace()
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Debug: Test LLM Stream") },
+                                        onClick = {
+                                            showMenu = false
+                                            viewModel.runLlmTest(withTool = false)
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Debug: Test LLM Tool Call") },
+                                        onClick = {
+                                            showMenu = false
+                                            viewModel.runLlmTest(withTool = true)
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Voice & Speech Settings") },
+                                        onClick = {
+                                            showMenu = false
+                                            showLanguageSheet = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Clear Conversation") },
+                                        onClick = {
+                                            viewModel.clearConversation()
+                                            showMenu = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Add 300 Sample Messages") },
+                                        onClick = {
+                                            viewModel.addSampleMessages(300)
+                                            showMenu = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Settings") },
+                                        onClick = {
+                                            showMenu = false
+                                            onSettingsClick()
+                                        }
+                                    )
+                                }
+                            },
+                            windowInsets = WindowInsets(0, 0, 0, 0),
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                        )
+                    }
+                },
+                bottomBar = {
                     ChatInputBar(
                         value = uiState.inputText,
                         onValueChange = viewModel::onInputTextChange,
                         onSendClick = { viewModel.sendMessage() },
                         onStopClick = { viewModel.cancelStreaming() },
-                        onMicClick = viewModel::startVoiceInput,
+                        onMicClick = { handleMicClick() },
                         isStreaming = uiState.isStreaming
                     )
                 }
-            }
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                if (isEmpty) {
-                    // Empty Conversation Hero Layout
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        AgentOrb(
-                            state = uiState.agentState,
-                            amplitude = voiceAmplitude,
-                            size = orbSize,
-                            modifier = Modifier.clickable {
-                                if (isSpeaking) viewModel.stopSpeaking()
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = "Hello! How can Orbit help you today?",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            uiState.suggestionChips.forEach { chip ->
-                                OrbitChip(
-                                    label = chip.label,
-                                    onClick = { viewModel.sendMessage(chip.promptText) }
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    // Active Conversation List
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        LazyColumn(
-                            state = listState,
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    if (isEmpty) {
+                        // Empty Conversation Hero Layout matching Mockup Screen 1
+                        Column(
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .animateContentSize(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp, vertical = 32.dp),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            items(
-                                items = uiState.messages,
-                                key = { it.id }
-                            ) { msg ->
-                                ChatMessageItem(
-                                    message = msg,
-                                    onRetry = { viewModel.retryMessage(it) },
-                                    onEdit = { viewModel.onInputTextChange(it) }
-                                )
-                            }
+                            Text(
+                                text = "What are we\nbuilding today?",
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 36.sp,
+                                    lineHeight = 42.sp
+                                ),
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
 
-                            // Suggestions underneath last agent message ONLY when agent is Idle and not streaming
-                            if (!uiState.isStreaming && uiState.agentState is AgentState.Idle) {
-                                item {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    FlowRow(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(uiState.suggestionChips) { chip ->
+                                    GlassCard(
+                                        modifier = Modifier
+                                            .width(160.dp)
+                                            .height(110.dp)
+                                            .clickable { viewModel.sendMessage(chip.promptText) }
                                     ) {
-                                        uiState.suggestionChips.take(3).forEach { chip ->
-                                            OrbitChip(
-                                                label = chip.label,
-                                                onClick = { viewModel.sendMessage(chip.promptText) }
+                                        Column(modifier = Modifier.padding(14.dp)) {
+                                            Text("✦", color = Color(0xFFFF5500), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Text(
+                                                text = chip.label,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Medium
                                             )
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-
-                    // Floating Scroll-To-Latest Button
-                    AnimatedVisibility(
-                        visible = !isAtBottom,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(16.dp)
-                    ) {
-                        FloatingActionButton(
-                            onClick = {
-                                scope.launch {
-                                    listState.animateScrollToItem(uiState.messages.size - 1)
+                    } else {
+                        // Active Conversation List matching Mockup Screen 3
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .animateContentSize(),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                items(
+                                    items = uiState.messages,
+                                    key = { it.id }
+                                ) { msg ->
+                                    ChatMessageItem(
+                                        message = msg,
+                                        onRetry = { viewModel.retryMessage(it) },
+                                        onEdit = { viewModel.onInputTextChange(it) }
+                                    )
                                 }
-                            },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+
+                                // Suggestions underneath last agent message
+                                if (!uiState.isStreaming && uiState.agentState is AgentState.Idle) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        FlowRow(
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            uiState.suggestionChips.take(3).forEach { chip ->
+                                                OrbitChip(
+                                                    label = "✦  ${chip.label}",
+                                                    onClick = { viewModel.sendMessage(chip.promptText) }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Floating Scroll-To-Latest Button
+                        AnimatedVisibility(
+                            visible = !isAtBottom,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp)
                         ) {
-                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to bottom")
+                            FloatingActionButton(
+                                onClick = {
+                                    scope.launch {
+                                        listState.animateScrollToItem(uiState.messages.size - 1)
+                                    }
+                                },
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Scroll to bottom")
+                            }
                         }
                     }
                 }
+            }
+
+            // FULL-SCREEN IMMERSIVE VOICE ASSISTANT OVERLAY MATCHING MOCKUP SCREEN 2 1:1
+            if (isVoiceActive) {
+                VoiceInputPanel(
+                    amplitude = voiceAmplitude,
+                    partialText = voicePartialText,
+                    currentLocale = uiState.voiceLocale,
+                    isSlideToCancel = false,
+                    onCancelClick = viewModel::cancelVoiceInput,
+                    onStopClick = viewModel::stopVoiceInput,
+                    onLanguageClick = { showLanguageSheet = true },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
