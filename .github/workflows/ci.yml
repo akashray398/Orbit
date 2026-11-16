@@ -40,6 +40,6 @@ jobs:
       - name: Build and Test Backend Proxy (.NET)
         run: |
           cd backend/OrbitProxy
-          dotnet restore OrbitProxy.sln
-          dotnet build OrbitProxy.sln --configuration Release --no-restore
-          dotnet test OrbitProxy.sln --configuration Release --no-build --verbosity normal
+          dotnet restore
+          dotnet build --no-restore
+          dotnet test --no-build --verbosity normal
