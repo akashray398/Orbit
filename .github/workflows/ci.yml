@@ -20,6 +20,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Grant Executable Permission to Gradlew
+        run: chmod +x gradlew
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -29,9 +37,7 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
-      - name: Build Backend Proxy (.NET)
+      - name: Build and Test Backend Proxy (.NET)
         run: |
-          cd backend/OrbitProxy
-          dotnet build
-          cd OrbitProxy.Tests
-          dotnet test
+          dotnet build backend/OrbitProxy/OrbitProxy.csproj
+          dotnet test backend/OrbitProxy/OrbitProxy.Tests/OrbitProxy.Tests.csproj
