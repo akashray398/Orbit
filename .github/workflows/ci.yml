@@ -39,8 +39,5 @@ jobs:
 
       - name: Build and Test Backend Proxy (.NET)
         run: |
-          dotnet restore backend/OrbitProxy/OrbitProxy.csproj
-          dotnet restore backend/OrbitProxy/OrbitProxy.Tests/OrbitProxy.Tests.csproj
-          dotnet build backend/OrbitProxy/OrbitProxy.csproj --no-restore
-          dotnet build backend/OrbitProxy/OrbitProxy.Tests/OrbitProxy.Tests.csproj --no-restore
-          dotnet test backend/OrbitProxy/OrbitProxy.Tests/OrbitProxy.Tests.csproj --no-build --verbosity normal
+          cd backend/OrbitProxy
+          dotnet test OrbitProxy.sln --verbosity normal
