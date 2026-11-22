@@ -20,6 +20,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import java.util.Calendar
 import java.util.TimeZone
 import javax.inject.Inject
 
@@ -31,7 +32,7 @@ class AddCalendarEventTool @Inject constructor(
 
     override val spec: ToolSpec = ToolSpec(
         name = "add_calendar_event",
-        description = "Adds an event to the user's calendar. startAt and endAt must be ISO-8601 strings in user's local timezone. Call get_current_time first to resolve relative dates.",
+        description = "Adds an event to the user's calendar. startAt and endAt are ISO-8601 strings in local timezone.",
         parametersJsonSchema = """
             {
                 "type": "object",
@@ -44,7 +45,7 @@ class AddCalendarEventTool @Inject constructor(
                     "description": { "type": "string", "maxLength": 500 },
                     "reminderMinutesBefore": { "type": "integer", "default": 10 }
                 },
-                "required": ["title", "startAt"]
+                "required": ["title"]
             }
         """.trimIndent()
     )
@@ -54,16 +55,25 @@ class AddCalendarEventTool @Inject constructor(
     override val returnsUntrustedContent: Boolean = true
 
     override suspend fun execute(args: ToolArguments, ctx: ToolContext): ToolResult {
-        val title = args.getString("title")
-        val startIso = args.getString("startAt")
+        val title = args.getOptionalString("title")?.ifBlank { null } ?: "Calendar Event"
+        val startIso = args.getOptionalString("startAt")
         val endIso = args.getOptionalString("endAt")
         val allDay = args.getBoolean("allDay", false)
         val location = args.getOptionalString("location") ?: ""
         val description = args.getOptionalString("description") ?: ""
-        val reminderMinutes = args.getInt("reminderMinutesBefore")
+        val reminderMinutes = args.getInt("reminderMinutesBefore", default = 10)
 
-        val startTime = DateTimeArgParser.parseIsoToEpochMillis(startIso, ctx.timeZoneId)
-            ?: return ToolResult.Failure(ToolError.InvalidArguments, "Invalid startAt format: '$startIso'")
+        val startTime = if (startIso != null) {
+            DateTimeArgParser.parseIsoToEpochMillis(startIso, ctx.timeZoneId)
+                ?: (System.currentTimeMillis() + 3600000L)
+        } else {
+            val cal = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, 1)
+                set(Calendar.HOUR_OF_DAY, 10)
+                set(Calendar.MINUTE, 0)
+            }
+            cal.timeInMillis
+        }
 
         val endTime = if (endIso != null) {
             DateTimeArgParser.parseIsoToEpochMillis(endIso, ctx.timeZoneId) ?: (startTime + 3600000L)
@@ -75,7 +85,6 @@ class AddCalendarEventTool @Inject constructor(
                 permissionChecker.isPermissionGranted(android.Manifest.permission.WRITE_CALENDAR)
 
         if (!hasCalendarPerms) {
-            // Path B: Open prefilled calendar insert intent
             val intent = Intent(Intent.ACTION_INSERT).apply {
                 data = CalendarContract.Events.CONTENT_URI
                 putExtra(CalendarContract.Events.TITLE, title)
@@ -85,10 +94,9 @@ class AddCalendarEventTool @Inject constructor(
                 putExtra(CalendarContract.Events.EVENT_LOCATION, location)
                 putExtra(CalendarContract.Events.DESCRIPTION, description)
             }
-            return intentLauncher.launchIntent(intent, "Opened calendar event for user confirmation.")
+            return intentLauncher.launchIntent(intent, "Opened calendar event '$title' for user confirmation.")
         }
 
-        // Path A: Insert directly via CalendarContract
         return try {
             val calendarId = getPrimaryCalendarId(context) ?: 1L
 
@@ -121,15 +129,16 @@ class AddCalendarEventTool @Inject constructor(
                 put("calendarId", calendarId)
             }.toString()
 
-            ToolResult.Success(summary = "Event '$title' added to calendar for $startIso.", undoPayload = undoPayload)
+            val formattedStartStr = DateTimeArgParser.formatEpochToIso(startTime, ctx.timeZoneId)
+            ToolResult.Success(summary = "Event '$title' added to calendar for $formattedStartStr.", undoPayload = undoPayload)
         } catch (e: Exception) {
             ToolResult.Failure(ToolError.Unknown(e.message ?: "Calendar write failed"), "Error: ${e.message}")
         }
     }
 
     override fun describeAction(args: ToolArguments): String {
-        val title = args.getString("title")
-        val startAt = args.getOptionalString("startAt") ?: ""
+        val title = args.getOptionalString("title") ?: "Calendar Event"
+        val startAt = args.getOptionalString("startAt") ?: "Tomorrow at 10 AM"
         return "Add event '$title' on $startAt"
     }
 
