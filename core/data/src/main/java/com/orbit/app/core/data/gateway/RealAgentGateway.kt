@@ -268,6 +268,14 @@ class RealAgentGateway @Inject constructor(
                 val name = userText.replace(Regex("(?i)call|make a call to|dial"), "").trim().ifEmpty { "Contact" }
                 Pair("make_call", "{\"name\":\"$name\"}")
             }
+            lower.contains("focus mode") || lower.contains("workout mode") || lower.contains("wind down") || lower.contains("macro") || lower.contains("routine") -> {
+                val routineName = when {
+                    lower.contains("workout") -> "Workout Mode"
+                    lower.contains("wind down") -> "Evening Wind Down"
+                    else -> "Focus Mode"
+                }
+                Pair("execute_macro_routine", "{\"routineName\":\"$routineName\"}")
+            }
             lower.contains("motivate") || lower.contains("guide") || lower.contains("study") || lower.contains("focus") || lower.contains("coach") || lower.contains("push me") -> {
                 Pair("get_personal_coaching", "{\"focusGoal\":\"Study & Growth\"}")
             }
@@ -298,13 +306,13 @@ class RealAgentGateway @Inject constructor(
                     ToolResult.Failure(ToolError.Unknown(e.message ?: "Failed"), e.message ?: "Error")
                 }
 
-                val (status, summary, undoPayload) = when (res) {
+                val (status, summary) = when (res) {
                     is ToolResult.Success -> Triple(ActionStatus.Success, res.summary, res.undoPayload)
                     is ToolResult.Failure -> Triple(ActionStatus.Failed, res.message, null)
                 }
 
                 if (actionLogId != null) {
-                    actionLogRepository.finishAction(actionLogId, status, summary, undoPayload)
+                    actionLogRepository.finishAction(actionLogId, status, summary, null)
                 }
 
                 executionSummary = summary
