@@ -268,6 +268,10 @@ class RealAgentGateway @Inject constructor(
                 val name = userText.replace(Regex("(?i)call|make a call to|dial"), "").trim().ifEmpty { "Contact" }
                 Pair("make_call", "{\"name\":\"$name\"}")
             }
+            lower.contains("brief") || lower.contains("briefing") || lower.contains("morning brief") || lower.contains("evening review") -> {
+                val type = if (lower.contains("evening")) "Evening" else "Morning"
+                Pair("get_daily_briefing", "{\"type\":\"$type\"}")
+            }
             lower.contains("focus mode") || lower.contains("workout mode") || lower.contains("wind down") || lower.contains("macro") || lower.contains("routine") -> {
                 val routineName = when {
                     lower.contains("workout") -> "Workout Mode"
