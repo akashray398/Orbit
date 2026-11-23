@@ -3,6 +3,7 @@ package com.orbit.app.core.tools.di
 import com.orbit.app.core.domain.model.Tool
 import com.orbit.app.core.tools.AddCalendarEventTool
 import com.orbit.app.core.tools.AddTaskTool
+import com.orbit.app.core.tools.AppFunctionsTool
 import com.orbit.app.core.tools.AppendToNoteTool
 import com.orbit.app.core.tools.CancelReminderTool
 import com.orbit.app.core.tools.CompleteTaskTool
@@ -120,4 +121,8 @@ abstract class ToolsModule {
     @Binds
     @IntoSet
     abstract fun bindFilterNotificationSpamTool(tool: FilterNotificationSpamTool): Tool
+
+    @Binds
+    @IntoSet
+    abstract fun bindAppFunctionsTool(tool: AppFunctionsTool): Tool
 }

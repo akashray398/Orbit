@@ -286,8 +286,12 @@ class RealAgentGateway @Inject constructor(
             lower.contains("motivate") || lower.contains("guide") || lower.contains("study") || lower.contains("focus") || lower.contains("coach") || lower.contains("push me") -> {
                 Pair("get_personal_coaching", "{\"focusGoal\":\"Study & Growth\"}")
             }
-            lower.contains("maps") -> Pair("open_app", "{\"target\":\"MAPS\"}")
-            lower.contains("camera") -> Pair("open_app", "{\"target\":\"CAMERA\"}")
+            lower.contains("petrol") || lower.contains("search petrol") || lower.contains("find petrol") || lower.contains("maps") -> {
+                Pair("execute_app_function", "{\"actionType\":\"MAPS_SEARCH\",\"query\":\"petrol pumps near me\"}")
+            }
+            lower.contains("camera") || lower.contains("photo") -> {
+                Pair("execute_app_function", "{\"actionType\":\"CAMERA\",\"query\":\"camera\"}")
+            }
             else -> Pair(null, null)
         }
 
