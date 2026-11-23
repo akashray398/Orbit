@@ -260,6 +260,9 @@ class RealAgentGateway @Inject constructor(
                 Pair("add_calendar_event", "{\"title\":\"Orbit Event\",\"startAt\":\"2025-11-12T18:00:00\"}")
             }
             lower.contains("status") || lower.contains("battery") -> Pair("get_device_status", "{}")
+            lower.contains("spam") || lower.contains("promo") || lower.contains("urgent") || lower.contains("filter notification") -> {
+                Pair("filter_notification_spam", "{\"sinceHours\":24}")
+            }
             lower.contains("24") || lower.contains("notification") || lower.contains("missed") || lower.contains("miss") || lower.contains("summarise") || lower.contains("summary") -> {
                 Pair("summarize_notifications", "{\"sinceHours\":24}")
             }

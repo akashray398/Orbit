@@ -9,6 +9,7 @@ import com.orbit.app.core.tools.CompleteTaskTool
 import com.orbit.app.core.tools.CreateNoteTool
 import com.orbit.app.core.tools.CreateReminderTool
 import com.orbit.app.core.tools.ExecuteMacroRoutineTool
+import com.orbit.app.core.tools.FilterNotificationSpamTool
 import com.orbit.app.core.tools.GetDailyBriefingTool
 import com.orbit.app.core.tools.GetDeviceStatusTool
 import com.orbit.app.core.tools.GetUpcomingEventsTool
@@ -115,4 +116,8 @@ abstract class ToolsModule {
     @Binds
     @IntoSet
     abstract fun bindGetDailyBriefingTool(tool: GetDailyBriefingTool): Tool
+
+    @Binds
+    @IntoSet
+    abstract fun bindFilterNotificationSpamTool(tool: FilterNotificationSpamTool): Tool
 }
