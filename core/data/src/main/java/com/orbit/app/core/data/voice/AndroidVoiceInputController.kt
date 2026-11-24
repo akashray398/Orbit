@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,7 +38,7 @@ class AndroidVoiceInputController @Inject constructor(
     private var speechRecognizer: SpeechRecognizer? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var currentAmplitude = 0f
-    private var busyRetryCount = 0
+    private var retryCount = 0
 
     override fun start(locale: VoiceLocale) {
         mainHandler.post {
@@ -47,24 +48,43 @@ class AndroidVoiceInputController @Inject constructor(
             }
 
             if (speechRecognizer != null) {
-                cancel()
+                try {
+                    speechRecognizer?.cancel()
+                    speechRecognizer?.destroy()
+                } catch (_: Exception) {}
             }
 
-            val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
+            val recognizer = try {
+                SpeechRecognizer.createSpeechRecognizer(context)
+            } catch (_: Exception) {
+                _state.value = VoiceInputState.Error(VoiceError.RecognizerUnavailable)
+                return@post
+            }
+
             speechRecognizer = recognizer
+
+            val langTag = try {
+                locale.bcp47Tag
+            } catch (_: Exception) {
+                Locale.getDefault().toLanguageTag()
+            }
 
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.bcp47Tag)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale.bcp47Tag)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, langTag)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, langTag)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             }
 
             recognizer.setRecognitionListener(createListener(locale))
             _state.value = VoiceInputState.Preparing
-            recognizer.startListening(intent)
+
+            try {
+                recognizer.startListening(intent)
+            } catch (_: Exception) {
+                _state.value = VoiceInputState.Error(VoiceError.Unknown("Speech start error"))
+            }
         }
     }
 
@@ -103,7 +123,7 @@ class AndroidVoiceInputController @Inject constructor(
         return object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 _state.value = VoiceInputState.Listening(0f, "")
-                busyRetryCount = 0
+                retryCount = 0
             }
 
             override fun onBeginningOfSpeech() {}
@@ -125,17 +145,16 @@ class AndroidVoiceInputController @Inject constructor(
             }
 
             override fun onError(error: Int) {
+                if ((error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT || error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) && retryCount < 2) {
+                    retryCount++
+                    mainHandler.postDelayed({ start(locale) }, 250)
+                    return
+                }
+
                 val voiceError = when (error) {
                     SpeechRecognizer.ERROR_NO_MATCH -> VoiceError.NoMatch
                     SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> VoiceError.NoSpeech
-                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> {
-                        if (busyRetryCount < 1) {
-                            busyRetryCount++
-                            mainHandler.postDelayed({ start(locale) }, 300)
-                            return
-                        }
-                        VoiceError.Busy
-                    }
+                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> VoiceError.Busy
                     SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> VoiceError.Network
                     SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> VoiceError.PermissionDenied
                     SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED -> VoiceError.LanguageUnavailable
@@ -147,8 +166,15 @@ class AndroidVoiceInputController @Inject constructor(
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val text = matches?.firstOrNull() ?: ""
-                _events.tryEmit(VoiceInputEvent.FinalResult(text))
-                _state.value = VoiceInputState.Idle
+                if (text.isNotBlank()) {
+                    _events.tryEmit(VoiceInputEvent.FinalResult(text))
+                    _state.value = VoiceInputState.Idle
+                } else if (retryCount < 2) {
+                    retryCount++
+                    mainHandler.postDelayed({ start(locale) }, 250)
+                } else {
+                    _state.value = VoiceInputState.Error(VoiceError.NoMatch)
+                }
             }
 
             override fun onPartialResults(partialResults: Bundle?) {

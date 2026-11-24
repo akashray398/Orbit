@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.orbit.app.core.domain.repository.ReminderRepository
@@ -51,14 +52,30 @@ class ReminderReceiver : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Reminders",
+                "Orbit Reminders & Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Orbit scheduled task and reminder notifications"
+                description = "High-priority interactive scheduled reminder notifications"
+                enableLights(true)
+                lightColor = Color.parseColor("#FF5500")
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 150, 250)
             }
             notificationManager.createNotificationChannel(channel)
         }
 
+        // Open App Intent
+        val openAppIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val openPendingIntent = PendingIntent.getActivity(
+            context,
+            reminderId.hashCode() + 1,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Mark Done Intent
         val doneIntent = Intent(context, ReminderReceiver::class.java).apply {
             this.action = ACTION_MARK_DONE
             putExtra(EXTRA_REMINDER_ID, reminderId)
@@ -73,11 +90,17 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Orbit Reminder")
-            .setContentText(title)
+            .setContentTitle("⏰ Orbit Reminder: $title")
+            .setContentText("It's time! Your scheduled reminder for '$title' is happening now.")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("It's time! Your scheduled reminder for '$title' is happening now."))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setColor(Color.parseColor("#FF5500"))
+            .setContentIntent(openPendingIntent)
+            .setVibrate(longArrayOf(0, 250, 150, 250))
             .setAutoCancel(true)
             .addAction(android.R.drawable.checkbox_on_background, "Mark Done", donePendingIntent)
+            .addAction(android.R.drawable.ic_menu_view, "Open Orbit", openPendingIntent)
             .build()
 
         notificationManager.notify(reminderId.hashCode(), notification)
