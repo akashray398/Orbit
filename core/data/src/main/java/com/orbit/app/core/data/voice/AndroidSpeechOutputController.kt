@@ -6,6 +6,8 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import com.orbit.app.core.domain.model.VoiceLocale
@@ -28,6 +30,7 @@ class AndroidSpeechOutputController @Inject constructor(
 
     private var tts: TextToSpeech? = null
     private var isInitialized = false
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var focusRequest: AudioFocusRequest? = null
 
@@ -35,10 +38,8 @@ class AndroidSpeechOutputController @Inject constructor(
     private var pendingLocale: VoiceLocale? = null
 
     init {
-        tts = try {
-            TextToSpeech(context, this, "com.google.android.tts")
-        } catch (_: Exception) {
-            TextToSpeech(context, this)
+        mainHandler.post {
+            tts = TextToSpeech(context, this)
         }
     }
 
@@ -47,6 +48,8 @@ class AndroidSpeechOutputController @Inject constructor(
             isInitialized = true
             try {
                 tts?.language = Locale.US
+                tts?.setSpeechRate(1.0f)
+                tts?.setPitch(1.0f)
             } catch (_: Exception) {}
 
             tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -73,6 +76,12 @@ class AndroidSpeechOutputController @Inject constructor(
                 pendingLocale = null
                 speak(text, loc)
             }
+        } else {
+            mainHandler.post {
+                try {
+                    tts = TextToSpeech(context, this)
+                } catch (_: Exception) {}
+            }
         }
     }
 
@@ -80,50 +89,54 @@ class AndroidSpeechOutputController @Inject constructor(
         val cleanText = stripMarkdown(text)
         if (cleanText.isEmpty()) return
 
-        if (!isInitialized || tts == null) {
-            pendingSpeakText = cleanText
-            pendingLocale = locale
-            return
-        }
+        mainHandler.post {
+            if (!isInitialized || tts == null) {
+                pendingSpeakText = cleanText
+                pendingLocale = locale
+                return@post
+            }
 
-        requestAudioFocus()
-        val javaLocale = try {
-            Locale.forLanguageTag(locale.bcp47Tag)
-        } catch (_: Exception) {
-            Locale.US
-        }
+            requestAudioFocus()
+            val javaLocale = try {
+                Locale.forLanguageTag(locale.bcp47Tag)
+            } catch (_: Exception) {
+                Locale.US
+            }
 
-        val setRes = try {
-            tts?.setLanguage(javaLocale)
-        } catch (_: Exception) {
-            TextToSpeech.LANG_NOT_SUPPORTED
-        }
+            val setRes = try {
+                tts?.setLanguage(javaLocale)
+            } catch (_: Exception) {
+                TextToSpeech.LANG_NOT_SUPPORTED
+            }
 
-        if (setRes == TextToSpeech.LANG_MISSING_DATA || setRes == TextToSpeech.LANG_NOT_SUPPORTED) {
+            if (setRes == TextToSpeech.LANG_MISSING_DATA || setRes == TextToSpeech.LANG_NOT_SUPPORTED) {
+                try {
+                    tts?.language = Locale.US
+                } catch (_: Exception) {}
+            }
+
+            val params = Bundle().apply {
+                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
+                putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+            }
+            val utteranceId = "orbit_tts_${System.currentTimeMillis()}"
+
             try {
-                tts?.language = Locale.US
+                tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
             } catch (_: Exception) {}
         }
-
-        val params = Bundle().apply {
-            putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
-            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
-        }
-        val utteranceId = "orbit_tts_${System.currentTimeMillis()}"
-
-        try {
-            tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
-        } catch (_: Exception) {}
     }
 
     override fun stop() {
-        try {
-            tts?.stop()
-        } catch (_: Exception) {}
-        pendingSpeakText = null
-        pendingLocale = null
-        _isSpeaking.value = false
-        abandonAudioFocus()
+        mainHandler.post {
+            try {
+                tts?.stop()
+            } catch (_: Exception) {}
+            pendingSpeakText = null
+            pendingLocale = null
+            _isSpeaking.value = false
+            abandonAudioFocus()
+        }
     }
 
     override fun isLanguageAvailable(locale: VoiceLocale): Boolean {
@@ -137,12 +150,14 @@ class AndroidSpeechOutputController @Inject constructor(
     }
 
     override fun release() {
-        stop()
-        try {
-            tts?.shutdown()
-        } catch (_: Exception) {}
-        tts = null
-        isInitialized = false
+        mainHandler.post {
+            stop()
+            try {
+                tts?.shutdown()
+            } catch (_: Exception) {}
+            tts = null
+            isInitialized = false
+        }
     }
 
     private fun requestAudioFocus() {
@@ -171,7 +186,10 @@ class AndroidSpeechOutputController @Inject constructor(
         return input
             .replace(Regex("\\*\\*(.*?)\\*\\*"), "$1")
             .replace(Regex("`(.*?)`"), "$1")
-            .replace(Regex("[-*]\\s+"), "")
+            .replace(Regex("[-*•]\\s+"), "")
+            .replace(Regex("[\\p{So}\\p{Cn}\\p{Cs}]"), "")
+            .replace(Regex("[^a-zA-Z0-9\\s.,!?'\":-]"), " ")
+            .replace(Regex("\\s+"), " ")
             .trim()
     }
 }

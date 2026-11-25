@@ -3,6 +3,7 @@ package com.orbit.app.core.tools
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.CalendarContract
 import android.provider.MediaStore
 import com.orbit.app.core.domain.model.RiskLevel
 import com.orbit.app.core.domain.model.Tool
@@ -61,7 +62,11 @@ class OpenAppTool @Inject constructor(
             }
             "CAMERA" -> Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
             "PHONE_DIALER" -> Intent(Intent.ACTION_DIAL)
-            "CALENDAR" -> Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALENDAR)
+            "CALENDAR" -> {
+                val pm = context.packageManager
+                val googleCalIntent = pm.getLaunchIntentForPackage("com.google.android.calendar")
+                googleCalIntent ?: Intent(Intent.ACTION_VIEW).setData(Uri.parse("content://com.android.calendar/time"))
+            }
             "MESSAGES" -> Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MESSAGING)
             "FILES" -> Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }
             "CONTACTS" -> Intent(Intent.ACTION_VIEW, Uri.parse("content://contacts/people"))
