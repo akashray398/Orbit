@@ -5,7 +5,6 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -417,8 +416,7 @@ fun ChatScreen(
                                 state = listState,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .fillMaxWidth()
-                                    .animateContentSize(),
+                                    .fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 items(

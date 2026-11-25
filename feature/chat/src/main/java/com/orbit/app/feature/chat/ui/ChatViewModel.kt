@@ -63,7 +63,7 @@ data class ChatUiState(
     val isOnline: Boolean = true,
     val isStreaming: Boolean = false,
     val voiceLocale: VoiceLocale = VoiceLocale.ENGLISH,
-    val spokenRepliesEnabled: Boolean = false,
+    val spokenRepliesEnabled: Boolean = true,
     val autoSendVoice: Boolean = true,
     val keepScreenOn: Boolean = true,
     val llmTestState: LlmTestDialogState = LlmTestDialogState(),
@@ -426,7 +426,7 @@ class ChatViewModel @Inject constructor(
                         _uiState.update { it.copy(agentState = AgentState.Idle, isStreaming = false) }
                         inMemoryTrace.add("Agent Completed: ${accumulatedText.take(60)}...")
 
-                        if (_uiState.value.spokenRepliesEnabled && accumulatedText.isNotBlank()) {
+                        if (accumulatedText.isNotBlank()) {
                             speechOutputController.speak(accumulatedText, _uiState.value.voiceLocale)
                         }
                     }

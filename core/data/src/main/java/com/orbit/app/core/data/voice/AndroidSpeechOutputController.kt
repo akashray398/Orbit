@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
+import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import com.orbit.app.core.domain.model.VoiceLocale
@@ -34,12 +35,20 @@ class AndroidSpeechOutputController @Inject constructor(
     private var pendingLocale: VoiceLocale? = null
 
     init {
-        tts = TextToSpeech(context, this)
+        tts = try {
+            TextToSpeech(context, this, "com.google.android.tts")
+        } catch (_: Exception) {
+            TextToSpeech(context, this)
+        }
     }
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             isInitialized = true
+            try {
+                tts?.language = Locale.US
+            } catch (_: Exception) {}
+
             tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {
                     _isSpeaking.value = true
@@ -78,20 +87,39 @@ class AndroidSpeechOutputController @Inject constructor(
         }
 
         requestAudioFocus()
-        val javaLocale = Locale.forLanguageTag(locale.bcp47Tag)
-        val setRes = tts?.setLanguage(javaLocale)
-
-        // Fallback to US English if requested locale language pack is missing
-        if (setRes == TextToSpeech.LANG_MISSING_DATA || setRes == TextToSpeech.LANG_NOT_SUPPORTED) {
-            tts?.language = Locale.US
+        val javaLocale = try {
+            Locale.forLanguageTag(locale.bcp47Tag)
+        } catch (_: Exception) {
+            Locale.US
         }
 
+        val setRes = try {
+            tts?.setLanguage(javaLocale)
+        } catch (_: Exception) {
+            TextToSpeech.LANG_NOT_SUPPORTED
+        }
+
+        if (setRes == TextToSpeech.LANG_MISSING_DATA || setRes == TextToSpeech.LANG_NOT_SUPPORTED) {
+            try {
+                tts?.language = Locale.US
+            } catch (_: Exception) {}
+        }
+
+        val params = Bundle().apply {
+            putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+        }
         val utteranceId = "orbit_tts_${System.currentTimeMillis()}"
-        tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+
+        try {
+            tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
+        } catch (_: Exception) {}
     }
 
     override fun stop() {
-        tts?.stop()
+        try {
+            tts?.stop()
+        } catch (_: Exception) {}
         pendingSpeakText = null
         pendingLocale = null
         _isSpeaking.value = false
@@ -100,13 +128,19 @@ class AndroidSpeechOutputController @Inject constructor(
 
     override fun isLanguageAvailable(locale: VoiceLocale): Boolean {
         if (!isInitialized || tts == null) return false
-        val result = tts?.isLanguageAvailable(Locale.forLanguageTag(locale.bcp47Tag))
+        val result = try {
+            tts?.isLanguageAvailable(Locale.forLanguageTag(locale.bcp47Tag))
+        } catch (_: Exception) {
+            TextToSpeech.LANG_NOT_SUPPORTED
+        }
         return result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED
     }
 
     override fun release() {
         stop()
-        tts?.shutdown()
+        try {
+            tts?.shutdown()
+        } catch (_: Exception) {}
         tts = null
         isInitialized = false
     }
