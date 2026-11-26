@@ -6,12 +6,12 @@ import com.orbit.app.core.common.coroutine.DispatcherProvider
 import com.orbit.app.core.data.database.daos.NotificationDao
 import com.orbit.app.core.data.planner.DailyPlanReport
 import com.orbit.app.core.data.planner.DailyPlannerEngine
-import com.orbit.app.core.data.planner.PlannerItem
 import com.orbit.app.core.domain.model.Task
 import com.orbit.app.core.domain.model.ToolArguments
 import com.orbit.app.core.domain.model.ToolContext
 import com.orbit.app.core.domain.repository.TaskRepository
 import com.orbit.app.core.tools.AddCalendarEventTool
+import com.orbit.app.core.tools.helpers.ReminderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +37,7 @@ class TodayViewModel @Inject constructor(
     private val notificationDao: NotificationDao,
     private val plannerEngine: DailyPlannerEngine,
     private val addCalendarEventTool: AddCalendarEventTool,
+    private val reminderManager: ReminderManager,
     private val dispatchers: DispatcherProvider
 ) : ViewModel() {
 
@@ -51,6 +52,7 @@ class TodayViewModel @Inject constructor(
     fun generateDailyPlan(incompleteSubject: String? = null, isTiredMode: Boolean = false) {
         val report = plannerEngine.generatePlan(incompleteSubject, isTiredMode)
         _uiState.update { it.copy(planReport = report) }
+        reminderManager.scheduleDailyPlanReminders(report)
     }
 
     fun toggleItemCompleted(itemId: String) {
