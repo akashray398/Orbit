@@ -256,8 +256,35 @@ class RealAgentGateway @Inject constructor(
                 val title = userText.replace(Regex("(?i)add task:|add task|create task"), "").trim().ifEmpty { "Orbit Task" }
                 Pair("add_task", "{\"title\":\"$title\"}")
             }
-            lower.contains("calendar") || lower.contains("event") -> {
-                Pair("add_calendar_event", "{\"title\":\"Orbit Event\",\"startAt\":\"2025-11-12T18:00:00\"}")
+            lower.contains("calendar") || lower.contains("schedule") -> {
+                Pair("open_app", "{\"target\":\"CALENDAR\"}")
+            }
+            lower.contains("contact") || lower.contains("contacts") -> {
+                Pair("open_app", "{\"target\":\"CONTACTS\"}")
+            }
+            lower.contains("camera") || lower.contains("photo") || lower.contains("picture") -> {
+                Pair("open_app", "{\"target\":\"CAMERA\"}")
+            }
+            lower.contains("youtube") || lower.contains("video") -> {
+                Pair("open_app", "{\"target\":\"YOUTUBE\"}")
+            }
+            lower.contains("spotify") || lower.contains("music") -> {
+                Pair("open_app", "{\"target\":\"SPOTIFY\"}")
+            }
+            lower.contains("calculator") || lower.contains("calculate") -> {
+                Pair("open_app", "{\"target\":\"CALCULATOR\"}")
+            }
+            lower.contains("chrome") || lower.contains("browser") || lower.contains("web") -> {
+                Pair("open_app", "{\"target\":\"CHROME\"}")
+            }
+            lower.contains("clock") -> {
+                Pair("open_app", "{\"target\":\"CLOCK\"}")
+            }
+            lower.contains("gallery") || lower.contains("photos") -> {
+                Pair("open_app", "{\"target\":\"GALLERY\"}")
+            }
+            lower.contains("settings") -> {
+                Pair("open_app", "{\"target\":\"SETTINGS\"}")
             }
             lower.contains("status") || lower.contains("battery") -> Pair("get_device_status", "{}")
             lower.contains("spam") || lower.contains("promo") || lower.contains("urgent") || lower.contains("filter notification") -> {
@@ -288,9 +315,6 @@ class RealAgentGateway @Inject constructor(
             }
             lower.contains("petrol") || lower.contains("search petrol") || lower.contains("find petrol") || lower.contains("maps") -> {
                 Pair("execute_app_function", "{\"actionType\":\"MAPS_SEARCH\",\"query\":\"petrol pumps near me\"}")
-            }
-            lower.contains("camera") || lower.contains("photo") -> {
-                Pair("execute_app_function", "{\"actionType\":\"CAMERA\",\"query\":\"camera\"}")
             }
             else -> Pair(null, null)
         }
