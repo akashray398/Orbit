@@ -16,7 +16,9 @@ import javax.inject.Inject
 
 data class RoutinesUiState(
     val routines: List<RoutineEntity> = emptyList(),
-    val messageText: String? = null
+    val messageText: String? = null,
+    val showAddDialog: Boolean = false,
+    val editingRoutine: RoutineEntity? = null
 )
 
 @HiltViewModel
@@ -40,10 +42,54 @@ class RoutinesViewModel @Inject constructor(
         }
     }
 
+    fun openAddDialog() {
+        _uiState.update { it.copy(showAddDialog = true) }
+    }
+
+    fun closeAddDialog() {
+        _uiState.update { it.copy(showAddDialog = false, editingRoutine = null) }
+    }
+
+    fun editRoutine(routine: RoutineEntity) {
+        _uiState.update { it.copy(showAddDialog = true, editingRoutine = routine) }
+    }
+
+    fun deleteRoutine(id: String) {
+        viewModelScope.launch(dispatchers.io) {
+            routineDao.deleteRoutine(id)
+            _uiState.update { it.copy(messageText = "Activity deleted.") }
+        }
+    }
+
     fun toggleRoutine(routine: RoutineEntity) {
         viewModelScope.launch(dispatchers.io) {
             val updated = routine.copy(enabled = !routine.enabled)
             routineDao.insertRoutine(updated)
+        }
+    }
+
+    fun saveCustomRoutine(name: String, category: String, time: String) {
+        viewModelScope.launch(dispatchers.io) {
+            val existing = _uiState.value.editingRoutine
+            val entity = if (existing != null) {
+                existing.copy(name = name, type = category, timeOfDay = time)
+            } else {
+                RoutineEntity(
+                    id = UUID.randomUUID().toString(),
+                    name = name,
+                    type = category,
+                    timeOfDay = time,
+                    enabled = true
+                )
+            }
+            routineDao.insertRoutine(entity)
+            _uiState.update {
+                it.copy(
+                    showAddDialog = false,
+                    editingRoutine = null,
+                    messageText = if (existing != null) "Routine updated." else "Routine '$name' added."
+                )
+            }
         }
     }
 
