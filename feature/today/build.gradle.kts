@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:common"))
     implementation(project(":core:data"))
+    implementation(project(":core:tools"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.navigation.compose)
