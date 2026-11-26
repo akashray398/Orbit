@@ -16,6 +16,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import timber.log.Timber
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -46,6 +47,7 @@ class AndroidSpeechOutputController @Inject constructor(
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             isInitialized = true
+            Timber.d("[SpeechOutput] TextToSpeech initialized successfully")
             try {
                 tts?.language = Locale.US
                 tts?.setSpeechRate(1.0f)
@@ -77,6 +79,7 @@ class AndroidSpeechOutputController @Inject constructor(
                 speak(text, loc)
             }
         } else {
+            Timber.e("[SpeechOutput] TextToSpeech initialization failed with status: $status")
             mainHandler.post {
                 try {
                     tts = TextToSpeech(context, this)
@@ -123,7 +126,9 @@ class AndroidSpeechOutputController @Inject constructor(
 
             try {
                 tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Timber.e(e, "[SpeechOutput] Error invoking tts.speak")
+            }
         }
     }
 

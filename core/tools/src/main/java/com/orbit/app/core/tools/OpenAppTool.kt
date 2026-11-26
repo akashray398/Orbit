@@ -3,7 +3,6 @@ package com.orbit.app.core.tools
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.provider.CalendarContract
 import android.provider.MediaStore
 import com.orbit.app.core.domain.model.RiskLevel
 import com.orbit.app.core.domain.model.Tool
@@ -23,12 +22,12 @@ class OpenAppTool @Inject constructor(
 
     override val spec: ToolSpec = ToolSpec(
         name = "open_app",
-        description = "Opens a system app target or allowed application by target name (BROWSER, CAMERA, CALENDAR, CLOCK, MAPS, PHONE_DIALER, CONTACTS, SETTINGS, MESSAGES, FILES) with an optional query.",
+        description = "Opens a system app target or allowed application by target name (BROWSER, CAMERA, CALENDAR, CLOCK, MAPS, PHONE_DIALER, CONTACTS, SETTINGS, MESSAGES, FILES, ACTIVITY) with an optional query.",
         parametersJsonSchema = """
             {
                 "type": "object",
                 "properties": {
-                    "target": { "type": "string", "enum": ["BROWSER", "CAMERA", "CALENDAR", "CLOCK", "MAPS", "PHONE_DIALER", "CONTACTS", "SETTINGS", "MESSAGES", "FILES"] },
+                    "target": { "type": "string", "enum": ["BROWSER", "CAMERA", "CALENDAR", "CLOCK", "MAPS", "PHONE_DIALER", "CONTACTS", "SETTINGS", "MESSAGES", "FILES", "ACTIVITY"] },
                     "appName": { "type": "string" },
                     "query": { "type": "string" }
                 }
@@ -64,8 +63,22 @@ class OpenAppTool @Inject constructor(
             "PHONE_DIALER" -> Intent(Intent.ACTION_DIAL)
             "CALENDAR" -> {
                 val pm = context.packageManager
-                val googleCalIntent = pm.getLaunchIntentForPackage("com.google.android.calendar")
-                googleCalIntent ?: Intent(Intent.ACTION_VIEW).setData(Uri.parse("content://com.android.calendar/time"))
+                val calPackages = listOf(
+                    "com.google.android.calendar",
+                    "com.samsung.android.calendar",
+                    "com.miui.calendar",
+                    "com.coloros.calendar",
+                    "com.bbk.calendar"
+                )
+                var calIntent: Intent? = null
+                for (pkg in calPackages) {
+                    val launch = pm.getLaunchIntentForPackage(pkg)
+                    if (launch != null) {
+                        calIntent = launch
+                        break
+                    }
+                }
+                calIntent ?: Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALENDAR)
             }
             "MESSAGES" -> Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MESSAGING)
             "FILES" -> Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }
